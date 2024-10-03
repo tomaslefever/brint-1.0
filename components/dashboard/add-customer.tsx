@@ -96,6 +96,15 @@ const AddCustomer = function AddCustomer({ onCustomerAdded }: AddCustomerProps) 
         setIsOpen(open)
     }
 
+    const placeholders = {
+        name: "Nombre",
+        lastname: "Apellido",
+        rut: "RUT",
+        address: "Dirección",
+        email: "Correo electrónico",
+        phone: "Teléfono",
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
@@ -122,7 +131,10 @@ const AddCustomer = function AddCustomer({ onCustomerAdded }: AddCustomerProps) 
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
-                                                <Input placeholder={key.charAt(0).toUpperCase() + key.slice(1)} {...field} />
+                                                <Input 
+                                                    placeholder={placeholders[key as keyof typeof placeholders]} 
+                                                    {...field} 
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -131,7 +143,7 @@ const AddCustomer = function AddCustomer({ onCustomerAdded }: AddCustomerProps) 
                             ))}
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Guardar paciente</Button>
+                            <Button type="submit" className="w-full">Guardar paciente</Button>
                         </DialogFooter>
                     </form>
                 </Form>
