@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import PocketBase from 'pocketbase'
 import Image from 'next/image'
 import { Separator } from './ui/separator'
-const pb = new PocketBase('http://localhost:8090')
+const pb = new PocketBase('http://localhost:8091')
 
 export default function LoginComponent() {
   const [email, setEmail] = useState('')
