@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import PocketBase from 'pocketbase'
+import Image from 'next/image'
+import { Separator } from './ui/separator'
 const pb = new PocketBase('http://127.0.0.1:8090')
 
 export default function LoginComponent() {
@@ -16,8 +18,16 @@ export default function LoginComponent() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
-  pb.authStore.token ? router.push('/dashboard') : console.log('Not logged in');
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      setIsAuthenticated(true)
+      router.push('/dashboard')
+    }
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,15 +35,15 @@ export default function LoginComponent() {
     setError('')
 
     try {
-      // Authenticate with PocketBase
       const authData = await pb.collection('users').authWithPassword(email, password)
+      
+      // Actualizar el campo 'last_login' del usuario
+      await pb.collection('users').update(authData.record.id, {
+        last_login: new Date().toISOString(),
+      })
 
-      console.log('Authentication successful')
-      console.log('Is valid:', pb.authStore.isValid)
-      console.log('Token:', pb.authStore.token)
-      console.log('User ID:', pb.authStore.model?.id)
-
-      // If login is successful, redirect to dashboard
+      localStorage.setItem('authToken', authData.token)
+      setIsAuthenticated(true)
       router.push('/dashboard')
     } catch (err) {
       if (err instanceof Error) {
@@ -46,32 +56,45 @@ export default function LoginComponent() {
     }
   }
 
+  if (isAuthenticated) {
+    return (
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Bienvenido de nuevo</CardTitle>
+          <CardDescription>Redirigiendo al dashboard...</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
   return (
     <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+      <CardHeader className="flex justify-center items-center space-y-4">
+        <Image src="/img/logo.png" alt="Logo" width={200} height={100} />
+        <Separator className='w-full my-4' />
+        <div className="flex flex-col items-center space-y-2">
+        <CardTitle>Inicia sesión</CardTitle>
+        <CardDescription className='text-center'>Ingresa tus credenciales para acceder a tu cuenta</CardDescription>
+        </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="email">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="Enter your email"
+                placeholder="Correo electrónico"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="password">Password</Label>
               <Input 
                 id="password" 
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -86,7 +109,7 @@ export default function LoginComponent() {
         </CardContent>
         <CardFooter>
           <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Autenticando...' : 'Ingresar'}
           </Button>
         </CardFooter>
       </form>

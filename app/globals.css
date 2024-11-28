@@ -76,3 +76,19 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.bg-01 {
+  background-image: url('/img/bg-01.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+/* BG Animation */
+@keyframes slide {
+  0% {
+    transform:translateX(-25%);
+  }
+  100% {
+    transform:translateX(25%);
+  }
+}

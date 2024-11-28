@@ -23,7 +23,7 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="account">Cuenta</TabsTrigger>
           <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
-          <TabsTrigger value="display">Visualización</TabsTrigger>
+          {/* <TabsTrigger value="display">Visualización</TabsTrigger> */}
         </TabsList>
         <TabsContent value="profile">
           <Card>

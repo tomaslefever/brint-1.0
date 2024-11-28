@@ -4,8 +4,8 @@ import { useState, useCallback } from 'react'
 import { Search } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import AddCustomer from "@/components/dashboard/add-customer"
 import CustomerList from './customer-list'
+import AddCustomer from './add-customer'
 
 export default function CustomersScreen() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -15,10 +15,14 @@ export default function CustomersScreen() {
     setRefreshTrigger(prev => prev + 1)
   }, [])
 
+  const handleCustomerAdded = () => {
+    setRefreshTrigger(prev => prev + 1)
+  }
+
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Pacientes</CardTitle>
+        <CardTitle className='text-2xl'>Pacientes</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between mb-4">
@@ -31,9 +35,13 @@ export default function CustomersScreen() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <AddCustomer onCustomerAdded={handleRefresh} />
+          <AddCustomer onCustomerAdded={handleCustomerAdded} />
         </div>
-        <CustomerList searchTerm={searchTerm} refreshTrigger={refreshTrigger} />
+        <CustomerList 
+        searchTerm={searchTerm} 
+        refreshTrigger={refreshTrigger}
+          onRefreshTriggered={() => setRefreshTrigger(0)}
+        />
       </CardContent>
     </Card>
   )
