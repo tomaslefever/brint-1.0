@@ -23,7 +23,7 @@ import es from 'javascript-time-ago/locale/es'
 TimeAgo.addDefaultLocale(es)
 const timeAgo = new TimeAgo('es-ES')
 
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase('https://innovaligners.pockethost.io/');
 
 const NotificationDropdown: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -39,10 +39,12 @@ const NotificationDropdown: React.FC = () => {
         console.error('Usuario no autenticado');
         return;
       }
+
+      
       
       const records = await pb.collection('notifications').getList(1, 50, {
         sort: '-created',
-        filter: `user = "${userId}"`,
+        filter: pb.authStore.model?.role === 'admin' ? '' : `user = "${userId}"`,
         expand: 'user,order',
         requestKey: null,
       });
@@ -105,7 +107,7 @@ const NotificationDropdown: React.FC = () => {
                 {notification.type === 'comment' && <MessageCircle className={`${notification.read ? 'text-muted-foreground' : 'text-blue-300 dark:text-blue-600'} h-6 w-8 mr-3`} />}
                 <div className="flex-1">
                   <p className={`text-sm hover:underline ${notification.read ? 'text-gray-500' : 'font-medium'}`}>
-                    <Link href={`/dashboard/orders/?order_id=${notification.expand?.order?.id}`} key={notification.id}>
+                    <Link href={`/dashboard/orders/${notification.expand?.order?.id}`} key={notification.id} onClick={() => markAsRead(notification.id)}>
                       {notification.message}
                     </Link>
                   </p>

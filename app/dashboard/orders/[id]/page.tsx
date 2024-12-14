@@ -50,7 +50,7 @@ async function fetchOrderTimeline(orderId: string): Promise<TimelineEvent[]> {
     // Obtener propuestas relacionadas con la orden
     const proposals = await pb.collection('proposals').getFullList({
       filter: `order = "${orderId}"`,
-      expand: 'order,created_by',
+      expand: 'order,created_by,comparisons',
       sort: '-created'
     });
 
@@ -117,33 +117,36 @@ export default function OrderDetailScreen({ params }: { params: { id: string } }
   }, [params.id])
 
   return (
-    <div className='flex flex-col gap-4 justify-end'>
-      <div className="flex gap-6">
-        <Card className="w-1/3 h-64">
+      <div className="flex flex-col gap-6">
+        <Card className="w-full">
           <CardHeader>
-            <CardTitle>Información de la orden</CardTitle>
+            <CardTitle className='text-xl text-gray-500'>Información de la orden</CardTitle>
           </CardHeader>
           <CardContent>
             {order && order.expand && (
-              <div className="space-y-4">
-                <p><strong>Paciente:</strong> {order.expand.customer.name}</p>
-                <p><strong>Doctor:</strong> {order.expand.created_by.name}</p>
-                <p><strong>Estado:</strong> {order.status === 'pending' ? 'Pendiente' : order.status === 'working' ? 'En Progreso' : order.status === 'complete' ? 'Completado' : order.status === 'canceled' ? 'Cancelado' : order.status === 'paused' ? 'Pausado' : order.status === 'proposal_sent' ? 'Propuesta enviada': ''}</p>
+              <div className="flex items-start gap-6">
+                <p><strong className='text-gray-800'>Paciente:</strong> {order.expand.customer.name}</p>
+                <p><strong className='text-gray-800'>Doctor:</strong> {order.expand.created_by.name}</p>
+                <p><strong className='text-gray-800'>Estado:</strong> {
+                order.status === 'pending' ? 'Pendiente' : 
+                order.status === 'canceled' ? 'Cancelado' : 
+                order.status === 'paused' ? 'Pausado' : 
+                order.status === 'proposal_sent' ? 'Plan de tratamiento enviado': 
+                order.status === 'proposal_accepted' ? 'Plan de tratamiento aceptado' : 
+                order.status === 'proposal_rejected' ? 'Plan de tratamiento rechazado' :
+                order.status === 'order_approved' ? 'Orden aprobada' :
+                order.status === 'order_rejected' ? 'Orden rechazada' :
+                order.status === 'meeting_scheduled' ? 'Reunión programada' :
+                order.status === 'working' ? 'Piezas en fabricación' :
+                order.status === 'shipping' ? 'Piezas enviadas' :
+                order.status === 'complete' ? 'Trabajo completado' :
+                ''}</p>
               </div>
             )}
           </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={() => router.push(`/dashboard/orders/${params.id}/new-proposal`)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Nueva Propuesta
-            </Button>
-          </CardFooter>
         </Card>
 
-        <Card className="w-2/3">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Historial</CardTitle>
           </CardHeader>
@@ -171,6 +174,5 @@ export default function OrderDetailScreen({ params }: { params: { id: string } }
           </CardContent>
         </Card>
       </div>
-    </div>
   )
 } 

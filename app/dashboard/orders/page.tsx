@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import NewOrder from './new-order'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import Link from 'next/link'
 
 export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -45,27 +46,11 @@ export default function OrdersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-              <SheetTrigger asChild>
-                <Button onClick={() => setIsSheetOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nueva orden
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-xl sm:max-w-xl" onInteractOutside={(e) => e.preventDefault()} onCloseAutoFocus={(e) => e.preventDefault()}>
-                <SheetHeader>
-                  <SheetTitle>Crear nueva orden</SheetTitle>
-                </SheetHeader>
-                <NewOrder 
-                  onOrderCreated={() => {
-                    setRefreshTrigger(prev => prev + 1)
-                    setIsSheetOpen(false)
-                  }} 
-                  customer_id={''} 
-                  onFormChange={(content: string) => formContentRef.current = content}
-                />
-              </SheetContent>
-            </Sheet>
+            <Link href="/dashboard/orders/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Nueva Orden
+              </Button>
+            </Link>
           </div>
           <OrderList searchTerm={searchTerm} refreshTrigger={refreshTrigger} />
         </div>

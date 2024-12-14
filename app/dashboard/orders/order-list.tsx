@@ -203,16 +203,24 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
                       order.status === 'canceled' ? 'destructive' :
                       order.status === 'paused' ? 'warning' :
                       order.status === 'proposal_sent' ? 'success' :
+                      order.status === 'proposal_accepted' ? 'success' :
+                      order.status === 'proposal_rejected' ? 'destructive' :
+                      order.status === 'order_approved' ? 'success' :
                       'default'
                     }>
                         {
                         order.status === 'pending' ? 'Pendiente' :
-                        order.status === 'working' ? 'En Progreso' :
-                        order.status === 'complete' ? 'Completado' :
                         order.status === 'canceled' ? 'Cancelado' :
                         order.status === 'paused' ? 'Pausado' :
                         order.status === 'proposal_sent' ? 'Propuesta enviada' :
-                        ''
+                        order.status === 'proposal_accepted' ? 'Propuesta aceptada' :
+                        order.status === 'proposal_rejected' ? 'Propuesta rechazada' :
+                        order.status === 'order_approved' ? 'Orden Aprobada' :
+                        order.status === 'working' ? 'Piezas en fabricación' :
+                        order.status === 'shipping' ? 'Piezas enviadas' :
+                        order.status === 'complete' ? 'Trabajo completado' :
+                        order.status === 'meeting_scheduled' ? 'Reunión programada' :
+                        'default'
                     }
                   </Badge>
                 </TableCell>

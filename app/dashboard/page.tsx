@@ -18,6 +18,7 @@ import { Order } from '@/types/order'
 import TimeAgo from 'javascript-time-ago'
 import es from 'javascript-time-ago/locale/es'
 import { EditOrderSheet } from './orders/edit-order-sheet'
+import { useRouter } from 'next/navigation'
 
 TimeAgo.addDefaultLocale(es)
 const timeAgo = new TimeAgo('es-ES')
@@ -36,6 +37,8 @@ const localizer = dateFnsLocalizer({
 
 
 export default function Dashboard() {
+  const router = useRouter();
+
   const [activeUsers, setActiveUsers] = useState(0)
   const [pendingOrders, setPendingOrders] = useState(0)
   const [recentCustomers, setRecentCustomers] = useState(0)
@@ -157,7 +160,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-4">
               {pedidosRecientes.map((pedido: Order) => (
-                <div key={pedido.id} className="flex items-center cursor-pointer hover:bg-slate-100" onClick={() => handleOrderClick(pedido.id)}>
+                <div key={pedido.id} className="flex items-center cursor-pointer hover:bg-slate-100" onClick={() => router.push(`/dashboard/orders/${pedido.id}`)}>
                   <div className="w-14 h-14 rounded bg-gray-200 mr-3 flex items-center justify-center">
                     <Box className="w-8 h-8 text-blue-500" />
                   </div>

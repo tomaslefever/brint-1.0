@@ -1,7 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+'use client'
+
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { FileText, UserSquare, UserCircle, PercentCircle, CalendarClock } from "lucide-react"
+import { FileText, UserSquare, UserCircle, PercentCircle, CalendarClock, Check, X, Calendar } from "lucide-react"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { FileCheck2, Package, FileImageIcon } from "lucide-react"
 import Link from "next/link"
@@ -18,12 +20,11 @@ import NewProposal from "@/app/dashboard/proposals/new-proposal"
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import router from "next/router"
 
 interface OrderCardProps {
   order: Order
 }
-
-
 
 export function OrderCard({ order }: OrderCardProps) {
 
@@ -54,14 +55,27 @@ const updateStatus = async (status: string) => {
         description: "Estado de la orden actualizado correctamente",
     })
     createNotification({
-        userId: pb.authStore.model?.id,
-        message: `Estado de la orden ${order?.id} actualizado a ${status === 'pending' ? 'Pendiente' : status === 'working' ? 'En Progreso' : status === 'complete' ? 'Completado' : status === 'canceled' ? 'Cancelado' : status === 'paused' ? 'Pausado' : status === 'proposal_sent' ? 'Propuesta enviada': ''}`,
+        userId: status == 'order_approved' || status == 'working' || status == 'shipping' || status == 'complete' || status == 'proposal_sent' ? order.expand?.created_by.id : '',
+        message: `Estado de la orden ${order?.id} actualizado a ${
+          status === 'pending' ? 'Pendiente' : 
+          status === 'working' ? 'Piezas en fabricación' : 
+          status === 'shipping' ? 'Piezas enviadas' :
+          status === 'complete' ? 'Trabajo completado' : 
+          status === 'canceled' ? 'Cancelado' : 
+          status === 'paused' ? 'Pausado' : 
+          status === 'proposal_sent' ? 'Propuesta enviada': 
+          status === 'order_approved' ? 'Orden aprobada': 
+          status === 'order_rejected' ? 'Orden rechazada': 
+          status === 'meeting_scheduled' ? 'Reunión agendada': 
+          status === 'meeting_completed' ? 'Reunión completada': ''}`,
         type: 'info',
         orderId: order.id!
     });
     // onOrderUpdated()
     order!.status = status;
+    // router.reload();
 }
+
   return (
       <Card>
             <CardContent className="">
@@ -174,12 +188,29 @@ const updateStatus = async (status: string) => {
 
             </Accordion>
             </CardContent>
+            {pb.authStore.model?.role == 'admin' && order.status == 'pending' && (
+            <CardFooter className="flex gap-2">
+              <Button className="bg-green-700 gap-2" onClick={() => updateStatus('order_approved')}><Check className="w-4"></Check>Aprobar orden</Button>
+              <Button className="gap-2 bg-red-700" onClick={() => updateStatus('order_rejected')}><X className="w-4"></X> Rechazar orden</Button>
+            </CardFooter>
+            )}
+            {order.status == 'meeting_scheduled' && pb.authStore.model?.role == 'admin' && (
+              <CardFooter className="flex gap-2">
+                <Link href={`/dashboard/orders/${order.id}/new-proposal`}><Button>Crear plan de tratamiento</Button></Link>
+              </CardFooter>
+            )}
+            {order.status == 'order_approved' && pb.authStore.model?.role == 'doctor' && (
+              <CardFooter className="flex gap-2">
+                <Button className="gap-2" onClick={() => updateStatus('meeting_scheduled')}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
+              </CardFooter>
+            )}
             <Lightbox
             open={lightboxOpen}
                 close={() => setLightboxOpen(false)}
                 slides={activeGallery === 'patient' ? patientSlides : radiologicalSlides}
                 index={lightboxIndex}
             />
+
           </Card>
   )
 } 

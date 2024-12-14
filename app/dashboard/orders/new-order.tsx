@@ -38,7 +38,6 @@ import DropZone from '@/app/utils/DropZone'
 
 interface NewOrderProps {
   onOrderCreated: () => void;
-  customer_id: string;
   onFormChange?: (content: string) => void;
 }
 
@@ -198,7 +197,10 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="cliente">Datos del paciente</Label>
-        
+        <SelectClients 
+          onClientSelect={(clientId) => setSelectedCustomerId(clientId)}
+          selectedClientId={selectedCustomerId}
+        />
       </div>
     </div>
   )
@@ -658,6 +660,13 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
           })
         }
       }
+
+      const notification = await createNotification({
+        userId: '',
+        message: 'El usuario ' + pb.authStore.model?.name + ' ha creado una nueva orden',
+        type: 'success',
+        orderId: createdOrder.id
+      })
 
       onOrderCreated()
       router.push('/dashboard/orders')

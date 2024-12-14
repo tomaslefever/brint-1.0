@@ -7,7 +7,7 @@ export type File = {
     updated: string;
     attachment: string;
     order: Order;
-    type: 'model3d' | 'fotografiaPaciente' | 'fotografiaAdicional' | 'imagenRadiologica';
+    type: 'model3d' | 'fotografiaPaciente' | 'fotografiaAdicional' | 'imagenRadiologica' | 'comparisons';
     owner: User;
     expand?: {
         owner?: User,

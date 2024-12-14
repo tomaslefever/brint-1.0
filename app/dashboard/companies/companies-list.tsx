@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from 'framer-motion'
 
-const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
+import pb from '@/app/actions/pocketbase'
 
 interface CompaniesListProps {
   searchTerm: string;
@@ -48,17 +48,17 @@ export default function CompaniesList({ searchTerm, refreshTrigger, onRefreshTri
       setIsLoading(true);
       setError(null);
       try {
-        const permissionFilter = userRole !== 'admin' 
-          ? `created_by = "${pb.authStore.model?.id}"` 
-          : '';
+        const permissionFilter = userRole !== 'admin' ? `created_by = "${pb.authStore.model?.id}"` : '';
         console.log('permissionFilter', permissionFilter);
         const records = await pb.collection('companies').getFullList<Company>({
           sort: '-created',
           expand: 'created_by',
-          filter: permissionFilter,
+          // filter: permissionFilter,
+          requestKey: null
         });
         if (isMounted) {
           setCompanies(records);
+          console.log('records', records);
         }
       } catch (error) {
         if (isMounted && error instanceof Error && error.name !== 'AbortError') {

@@ -27,10 +27,10 @@ import { Select, SelectContent, SelectValue, SelectItem, SelectTrigger } from "@
 
 const companySchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
-    address: z.string().min(1, "La dirección es requerida"),
-    email: z.string().email("Correo electrónico inválido"),
-    phone: z.string().min(1, "El teléfono es requerido"),
-    comuna: z.string().min(1, "La comuna es requerida"),
+    address: z.string(),
+    email: z.string(),
+    phone: z.string(),
+    comuna: z.string(),
 })
 
 type CompanyFormValues = z.infer<typeof companySchema>
