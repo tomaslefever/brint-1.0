@@ -18,7 +18,7 @@ import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Plus } from "lucide-react"
 import pb from '@/app/actions/pocketbase'
-import { Customer } from '@/types/customer'
+// import { Customer } from '@/types/customer'
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
@@ -39,9 +39,18 @@ interface AddCompanyProps {
     onCustomerAdded: () => void;
 }
 
+interface InputMaskProps {
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    value: string;
+    name: string;
+    placeholder?: string;
+    type?: string;
+    className?: string;
+}
+
 const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const router = useRouter()
+    // const router = useRouter()
     const { toast } = useToast()
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 

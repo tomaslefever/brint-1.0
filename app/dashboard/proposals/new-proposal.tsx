@@ -334,7 +334,6 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
           <div className="flex flex-col">
             <div className='text-xs text-muted-foreground'>
               Paso {paso} de 2 - {
-                
                 paso === 1 ? "Detalles del tratamiento" : "Información comercial"
               }
             </div>
