@@ -19,7 +19,7 @@ import { Input } from "../../../components/ui/input"
 import { Plus } from "lucide-react"
 import pb from '@/app/actions/pocketbase'
 // import { Customer } from '@/types/customer'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import RUT from 'rut-chile';
