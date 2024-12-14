@@ -39,15 +39,6 @@ interface AddCompanyProps {
     onCustomerAdded: () => void;
 }
 
-interface InputMaskProps {
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    value: string;
-    name: string;
-    placeholder?: string;
-    type?: string;
-    className?: string;
-}
-
 const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
     const [isOpen, setIsOpen] = useState(false)
     // const router = useRouter()
@@ -126,6 +117,7 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
     }
 
     const renderInput = (key: string, field: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (
             <FormItem className="space-y-0">
                 <FormLabel className="text-xs text-muted-foreground">{labels[key as keyof typeof labels]}</FormLabel>
