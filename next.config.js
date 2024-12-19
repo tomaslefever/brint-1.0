@@ -1,5 +1,14 @@
 module.exports = {
-  basePath: '/app',
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/app',
+        permanent: true,
+      },
+    ];
+  },
+
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
