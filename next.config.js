@@ -2,8 +2,8 @@ module.exports = {
   async rewrites() {
     return [
       {
-        source: '/:path*', // Captura cualquier cosa bajo /assets
-        destination: '/app/:path*', // Redirige al destino deseado
+        source: ':path*', // Captura cualquier cosa bajo /assets
+        destination: 'app/:path*', // Redirige al destino deseado
       },
     ];
   },
