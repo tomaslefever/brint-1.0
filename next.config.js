@@ -1,13 +1,14 @@
 module.exports = {
-  async rewrites() {
-    return [
-      {
-        source: '/img/:path*',
-        destination: '/app/img/:path*',
-      },
-    ];
-  },
-
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/img/:path*',
+  //       destination: '/app/img/:path*',
+  //     },
+  //   ];
+  // },
+  // basePath: '/app',
+  assetPrefix: '/app',
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
