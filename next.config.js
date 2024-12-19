@@ -7,8 +7,8 @@ module.exports = {
   //     },
   //   ];
   // },
-  basePath: '/app',
-  assetPrefix: '/app',
+  // basePath: '',
+  // assetPrefix: '/app',
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
