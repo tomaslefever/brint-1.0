@@ -78,7 +78,7 @@ body {
 }
 
 .bg-01 {
-  background-image: url('/img/bg-01.jpg');
+  background-image: url('/app/img/bg-01.jpg');
   background-size: cover;
   background-position: center;
 }

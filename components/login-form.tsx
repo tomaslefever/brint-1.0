@@ -70,7 +70,7 @@ export default function LoginComponent() {
   return (
     <Card className="w-[350px]">
       <CardHeader className="flex justify-center items-center space-y-4">
-        <Image src="/img/logo.png" alt="Logo" width={200} height={100} />
+        <Image src="/app/img/logo.png" alt="Logo" width={200} height={100} />
         <Separator className='w-full my-4' />
         <div className="flex flex-col items-center space-y-2">
         <CardTitle>Inicia sesión</CardTitle>
