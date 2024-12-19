@@ -7,7 +7,7 @@ module.exports = {
   //     },
   //   ];
   // },
-  // basePath: '/app',
+  basePath: '/app',
   assetPrefix: '/app',
   typescript: {
     // !! WARN !!
@@ -15,6 +15,5 @@ module.exports = {
     // your project has type errors.
     // !! WARN !!
     ignoreBuildErrors: true,
-    strict: false,
   },
 };
