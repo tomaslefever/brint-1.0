@@ -3,7 +3,7 @@ module.exports = {
     return [
       {
         source: '/img/:path*',
-        destination: 'https://innovaligners.cl/app/img/:path*',
+        destination: '/app/img/:path*',
       },
     ];
   },
