@@ -11,7 +11,7 @@ export type Order = {
     created_by: User;
     customer: Customer;
     activity: Activity[];
-    model3d: File;
+    model3d: File[];
     fotografiasPaciente: File[];
     fotografiasAdicionales: File[];
     imagenesRadiologicas: File[];
@@ -52,7 +52,7 @@ export type Order = {
   comunaRetiro: string;
   fechaRetiro: string;
   horaRetiro: string;
-  model3d: File;
+  model3d: File[];
   fotografiasPaciente: File[];
   fotografiasAdicionales: File[];
   imagenesRadiologicas: File[];

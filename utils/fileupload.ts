@@ -3,12 +3,15 @@ import pb from '@/app/actions/pocketbase'
 
 export const uploadFile = async (file: File, orderId: string, type: string) => {
   try {
-    const newFile = await pb.collection('files').create({
-      attachment: file,
-      order: orderId,
-      type: type,
-      owner: pb.authStore.model?.id,
-      requestKey: null
+    const formData = new FormData();
+    formData.append('attachment', file);
+    formData.append('order', orderId);
+    formData.append('type', type);
+    formData.append('owner', pb.authStore.model?.id || '');
+
+    const newFile = await pb.collection('files').create(formData, {
+      $cancelKey: `upload_${orderId}_${Date.now()}`,
+      requestKey: `upload_${orderId}_${Date.now()}`,
     });
     
     const updatedOrder = await pb.collection('orders').getOne(orderId);
@@ -37,6 +40,9 @@ export const uploadFile = async (file: File, orderId: string, type: string) => {
     return newFile;
   } catch (error) {
     console.error('Error al subir el archivo:', error);
+    if (error.isAbort) {
+      console.log('La solicitud fue cancelada');
+    }
     throw error;
   }
 };

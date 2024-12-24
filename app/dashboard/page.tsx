@@ -19,6 +19,7 @@ import TimeAgo from 'javascript-time-ago'
 import es from 'javascript-time-ago/locale/es'
 import { EditOrderSheet } from './orders/edit-order-sheet'
 import { useRouter } from 'next/navigation'
+import OrderList from './orders/order-list'
 
 TimeAgo.addDefaultLocale(es)
 const timeAgo = new TimeAgo('es-ES')
@@ -158,39 +159,10 @@ export default function Dashboard() {
             <CardDescription>Últimas 5 órdenes ingresadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {pedidosRecientes.map((pedido: Order) => (
-                <div key={pedido.id} className="flex items-center cursor-pointer hover:bg-slate-100" onClick={() => router.push(`/dashboard/orders/${pedido.id}`)}>
-                  <div className="w-14 h-14 rounded bg-gray-200 mr-3 flex items-center justify-center">
-                    <Box className="w-8 h-8 text-blue-500" />
-                  </div>
-                  <div className="flex-1 flex flex-col items-start gap-1">
-                    Paciente: {pedido.customer.name}
-                    <p className='text-xs text-muted-foreground'>Creado por {pedido.expand?.created_by?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {timeAgo.format(new Date(pedido.created))}
-                    </p>
-                  </div>
-                  <Badge variant={
-                    pedido.status === 'pending' ? 'outline' :
-                    pedido.status === 'working' ? 'default' :
-                    pedido.status === 'complete' ? 'success' :
-                    pedido.status === 'canceled' ? 'destructive' :
-                    pedido.status === 'paused' ? 'warning' :
-                    'default'
-                  }>
-                      {
-                      pedido.status === 'pending' ? 'Pendiente' :
-                      pedido.status === 'working' ? 'En Progreso' :
-                      pedido.status === 'complete' ? 'Completado' :
-                      pedido.status === 'canceled' ? 'Cancelado' :
-                      pedido.status === 'paused' ? 'Pausado' :
-                      'default'
-                  }
-                  </Badge>
-                </div>
-              ))}
-            </div>
+            <OrderList 
+              searchTerm=""
+              refreshTrigger={0}
+            />
           </CardContent>
         </Card>
 

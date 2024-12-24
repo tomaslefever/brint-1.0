@@ -112,22 +112,22 @@ const updateStatus = async (status: string) => {
               </AccordionItem>
 
               <AccordionItem value="item-5">
-                <AccordionTrigger><span className='flex items-center gap-2'><Package className="w-4 h-4" /> Modelo ({order.expand?.model3d ? 1 : 0})</span></AccordionTrigger>
+                <AccordionTrigger><span className='flex items-center gap-2'><Package className="w-4 h-4" /> Modelo ({order.expand?.model3d?.length || 0})</span></AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4">
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-500">Método de entrega del modelo</span>
                       <span className="text-sm capitalize font-bold">{order.metodoEntregaModelo} </span>
                     </div>
-                    {order.expand?.model3d && (
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-500">Modelo 3D</span>
+                    {order.expand?.model3d && order.expand.model3d.map((model, index) => (
+                      <div key={model.id} className="flex flex-col">
+                        <span className="font-medium text-gray-500">Modelo 3D {index + 1}</span>
                         <div className='flex justify-between items-center gap-2'>
-                          <span className='text-xs text-muted-foreground'>{order.expand?.model3d?.attachment} <span className='font-bold'>({order.expand?.model3d?.attachment.split('.')[0].length} KB)</span></span>
-                          <Link target="_blank" href={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${order.expand?.model3d?.id}/${order.expand?.model3d?.attachment}`} className="p-2 gap-2 transition-all hover:bg-transparent hover:text-slate-500 border border-gray-300 flex items-center justify-center rounded-md ">Descargar <Download className="h-3 w-3" /></Link>
+                          <span className='text-xs text-muted-foreground'>{model.attachment} <span className='font-bold'>({model.attachment.split('.')[0].length} KB)</span></span>
+                          <Link target="_blank" href={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${model.id}/${model.attachment}`} className="p-2 gap-2 transition-all hover:bg-transparent hover:text-slate-500 border border-gray-300 flex items-center justify-center rounded-md ">Descargar <Download className="h-3 w-3" /></Link>
                         </div>
                       </div>
-                    )}
+                    ))}
                     {order.metodoEntregaModelo == 'fisico' && (
                       <Card className='w-full '>
                         <CardHeader className='px-4 pb-2'>

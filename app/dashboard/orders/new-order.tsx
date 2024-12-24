@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { CalendarIcon, Upload, Info, ChevronRight, ChevronLeft, X, Plus, UploadCloud } from 'lucide-react'
+import { CalendarIcon, Upload, Info, ChevronRight, ChevronLeft, X, Plus, UploadCloud, AlertCircle, Link, Terminal } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { useDropzone } from 'react-dropzone';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +36,7 @@ import { createNotification } from '@/utils/notifications'
 import { createActivity } from '@/utils/newactivity'
 import { uploadFile } from '@/utils/fileupload'
 import DropZone from '@/app/utils/DropZone'
+import { toast } from '@/hooks/use-toast'
 
 interface NewOrderProps {
   onOrderCreated: () => void;
@@ -81,7 +83,7 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
   const [horaRetiro, setHoraRetiro] = useState('')
   const [direccionRetiro, setDireccionRetiro] = useState('')
   const [comunaRetiro, setComunaRetiro] = useState('')
-  const [archivo, setArchivo] = useState<File | null>(null)
+  const [archivos, setArchivos] = useState<File[]>([])
   const [fotografias, setFotografias] = useState<{[key: string]: ImagenCargada | null}>({
     frontalSonrisa: null,
     lateralSonrisa: null,
@@ -96,65 +98,96 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
     coneBeam: null
   })
 
-  // Estados para el paso 2
+  // Estados separados para valores y checkboxes
   const [maxilarSuperior, setMaxilarSuperior] = useState({
     alineacion: '',
-    'nivelacion': '',
-    'stripping': '',
-    'expansion': '',
-    'retroinclinacion': '',
-    'proinclinacion': '',
-    'extrusion': '',
-    'intrusion': '',
+    nivelacion: '',
+    stripping: '',
+    expansion: '',
+    retroinclinacion: '',
+    proinclinacion: '',
+    extrusion: '',
+    intrusion: '',
     'cerrar Espacio': '',
     'cerrar Linea Media': ''
+  })
+
+  const [maxilarSuperiorChecks, setMaxilarSuperiorChecks] = useState({
+    nivelacion: false,
+    stripping: false,
+    expansion: false,
+    retroinclinacion: false,
+    proinclinacion: false,
+    extrusion: false,
+    intrusion: false,
+    'cerrar Espacio': false,
+    'cerrar Linea Media': false
   })
 
   const [mandibula, setMandibula] = useState({
     alineacion: '',
-    'nivelacion': '',
-    'stripping': '',
-    'expansion': '',
-    'retroinclinacion': '',
-    'proinclinacion': '',
-    'extrusion': '',
-    'intrusion': '',
+    nivelacion: '',
+    stripping: '',
+    expansion: '',
+    retroinclinacion: '',
+    proinclinacion: '',
+    extrusion: '',
+    intrusion: '',
     'cerrar Espacio': '',
     'cerrar Linea Media': ''
   })
 
+  const [mandibulaChecks, setMandibulaChecks] = useState({
+    nivelacion: false,
+    stripping: false,
+    expansion: false,
+    retroinclinacion: false,
+    proinclinacion: false,
+    extrusion: false,
+    intrusion: false,
+    'cerrar Espacio': false,
+    'cerrar Linea Media': false
+  })
+
   const [activity, setActivity] = useState('')
 
-  const manejarCambioArchivo = useCallback((files: FileList | null, tipo: string) => {
-    if (files && files[0]) {
-      const file = files[0]
-      const reader = new FileReader()
-
-      reader.onloadend = () => {
-        const imagenCargada: ImagenCargada = {
-          file: file,
-          preview: reader.result as string
-        }
-
-        if (tipo.startsWith('adicionales-')) {
-          const index = parseInt(tipo.split('-')[1])
+  const manejarCambioArchivo = useCallback((files: FileList | File[] | null, tipo: string) => {
+    if (files) {
+      if (tipo === 'modelo3d') {
+        const nuevosArchivos = Array.isArray(files) ? files : Array.from(files);
+        setArchivos(prev => [...prev, ...nuevosArchivos]);
+      } else if (tipo.startsWith('adicionales-')) {
+        const index = parseInt(tipo.split('-')[1])
+        const file = Array.isArray(files) ? files[0] : files[0];
+        if (file) {
+          const preview = URL.createObjectURL(file);
           setFotografiasAdicionales(prev => {
-            const newFotos = [...prev]
-            newFotos[index] = imagenCargada
-            return newFotos
-          })
-        } else if (tipo in fotografias) {
-          setFotografias(prev => ({ ...prev, [tipo]: imagenCargada }))
-        } else if (tipo in imagenesRadiologicas) {
-          setImagenesRadiologicas(prev => ({ ...prev, [tipo]: imagenCargada }))
-        } else if (tipo === 'modelo3d') {
-          setArchivo(file)
+            const newFotos = [...prev];
+            newFotos[index] = { file, preview };
+            return newFotos;
+          });
+        }
+      } else if (tipo in fotografias) {
+        const file = Array.isArray(files) ? files[0] : files[0];
+        if (file) {
+          const preview = URL.createObjectURL(file);
+          setFotografias(prev => ({
+            ...prev,
+            [tipo]: { file, preview }
+          }));
+        }
+      } else if (tipo in imagenesRadiologicas) {
+        const file = Array.isArray(files) ? files[0] : files[0];
+        if (file) {
+          const preview = URL.createObjectURL(file);
+          setImagenesRadiologicas(prev => ({
+            ...prev,
+            [tipo]: { file, preview }
+          }));
         }
       }
-
-      reader.readAsDataURL(file)
     }
-  }, [fotografias, imagenesRadiologicas])
+  }, [fotografias, imagenesRadiologicas]);
 
   const eliminarImagen = useCallback((tipo: string, index?: number) => {
     if (tipo === 'adicionales' && typeof index === 'number') {
@@ -179,11 +212,17 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
   )
 
   const handleMaxilarSuperiorChange = (field: string, value: string) => {
-    setMaxilarSuperior(prev => ({ ...prev, [field]: value }))
+    setMaxilarSuperior(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const handleMandibulaChange = (field: string, value: string) => {
-    setMandibula(prev => ({ ...prev, [field]: value }))
+    setMandibula(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const renderPaso1 = () => (
@@ -221,13 +260,22 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
             </div>
           </RadioGroup>
           {Object.entries(maxilarSuperior).slice(1).map(([key, value]) => (
-            <div key={`maxilarSuperior${key}`} className="flex items-start space-x-2">
-              <div className="grid gap-1.5 leading-none">
+            <div key={`maxilarSuperior${key}`} className="flex items-center space-x-2">
+              <Checkbox 
+                id={`maxilarSuperior${key}Checkbox`}
+                checked={maxilarSuperiorChecks[key]}
+                onCheckedChange={(checked) => setMaxilarSuperiorChecks(prev => ({
+                  ...prev,
+                  [key]: checked
+                }))}
+              />
+              <div className="grid gap-1.5 leading-none flex-1">
                 <Input 
                   className="h-8" 
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)} 
                   value={value}
                   onChange={(e) => handleMaxilarSuperiorChange(key, e.target.value)}
+                  disabled={!maxilarSuperiorChecks[key]}
                 />
               </div>
             </div>
@@ -246,13 +294,22 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
             </div>
           </RadioGroup>
           {Object.entries(mandibula).slice(1).map(([key, value]) => (
-            <div key={`mandibula${key}`} className="flex items-start space-x-2">
-              <div className="grid gap-1.5 leading-none">
+            <div key={`mandibula${key}`} className="flex items-center space-x-2">
+              <Checkbox 
+                id={`mandibula${key}Checkbox`}
+                checked={mandibulaChecks[key]}
+                onCheckedChange={(checked) => setMandibulaChecks(prev => ({
+                  ...prev,
+                  [key]: checked
+                }))}
+              />
+              <div className="grid gap-1.5 leading-none flex-1">
                 <Input 
                   className="h-8" 
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)} 
                   value={value}
                   onChange={(e) => handleMandibulaChange(key, e.target.value)}
+                  disabled={!mandibulaChecks[key]}
                 />
               </div>
             </div>
@@ -272,9 +329,9 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
   )
 
   const renderPaso3 = () => (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion type="multiple" defaultValue={["item-1", "item-2"]} className="w-full">
       <AccordionItem value="item-1">
-        <AccordionTrigger>1. Método de Entrega del Modelo</AccordionTrigger>
+        <AccordionTrigger disabled>1. Método de Entrega del Modelo</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-4">
             <Select value={metodoEntregaModelo} onValueChange={setMetodoEntregaModelo}>
@@ -282,154 +339,66 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
                 <SelectValue placeholder="Seleccione el método de entrega del modelo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="digital">Digital (archivo)</SelectItem>
-                <SelectItem value="fisico">Modelo físico (Yeso)</SelectItem>
+                <SelectItem value="digital">Digital (archivos STL)</SelectItem>
+                <SelectItem value="radiologico">Imagen radiologica (archivo DICOM o DCM)</SelectItem>
+                <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem>
                 {/* <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem> */}
               </SelectContent>
             </Select>
 
             {metodoEntregaModelo === 'digital' && (
               <div className="space-y-4">
-                <Label htmlFor="subir-archivo">Subir Archivo de Modelo 3D</Label>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="relative">
-                    <Input 
-                      type="file" 
-                      onChange={(e) => setArchivo(e.target.files?.[0] || null)}
-                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                    />
-                    <div className="border rounded-md p-2 px-4 text-sm truncate flex gap-2 items-center hover:bg-slate-500">
-                      <UploadCloud className='h-4 w-4' />
-                      {archivo ? archivo.name : 'Seleccionar archivo'}
-                    </div>
-                  </div>
-                </div>
-                <RadioGroup value={opcionModeloDigital} onValueChange={setOpcionModeloDigital}>
-                  <Alert className='bg-sky-50'>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Instrucciones para envío vía 3shape Communicate</AlertTitle>
-                    <AlertDescription>
-                      Por favor enviar a cuenta communicate: digital@innova4d.cl
-                    </AlertDescription>
-                  </Alert>
-                </RadioGroup>
-
-                {opcionModeloDigital === 'archivo' && (
-                  <div className="space-y-2">
-
-                    {archivo && (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-500">Archivo seleccionado: {archivo.name}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {opcionModeloDigital === '3shape' && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Instrucciones para envío vía 3shape Communicate</AlertTitle>
-                    <AlertDescription>
-                      Por favor enviar a cuenta communicate: digital@innova4d.cl
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <FileDropzone 
+                  files={archivos}
+                  onDrop={(acceptedFiles) => {
+                    if (acceptedFiles.length > 0) {
+                      setArchivos(prev => [...prev, ...acceptedFiles]);
+                    }
+                  }}
+                  onDelete={(index) => {
+                    setArchivos(prev => prev.filter((_, i) => i !== index));
+                  }}
+                  acceptedFileTypes={{
+                    'model/stl': ['.stl'],
+                    'application/octet-stream': ['.stl']
+                  }}
+                  fileTypeDescription="STL"
+                />
               </div>
             )}
 
-            {metodoEntregaModelo === 'fisico' && (
-              <div className="space-y-4">
-                <RadioGroup value={opcionModeloFisico} onValueChange={setOpcionModeloFisico}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="retiro" id="retiro" />
-                    <Label htmlFor="retiro">Retiro a domicilio</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="envio" id="envio" />
-                    <Label htmlFor="envio">Envío a nuestro laboratorio</Label>
-                  </div>
-                </RadioGroup>
-
-                {opcionModeloFisico === 'envio' && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle className="font-semibold">Envía el modelo a nuestro laboratorio</AlertTitle>
-                    <AlertDescription>
-                      Te enviaremos un correo con los detalles del envío. Debes asegurar que el modelo sea transportable y no se deforme.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {opcionModeloFisico === 'retiro' && (
-                  <div className="space-y-4 mt-4">
-                    <div>
-                      <Label htmlFor="direccion">Dirección de Retiro</Label>
-                      <Input id="direccion" placeholder="Ingrese la dirección completa" value={direccionRetiro} onChange={(e) => setDireccionRetiro(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label htmlFor="comuna">Comuna</Label>
-                      <Input id="comuna" placeholder="Ingrese la comuna" value={comunaRetiro} onChange={(e) => setComunaRetiro(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Fecha de Retiro</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {fechaRetiro ? format(fechaRetiro, "PPP", { locale: es }) : <span>Seleccionar fecha de retiro</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={fechaRetiro}
-                            onSelect={setFechaRetiro}
-                            initialFocus
-                            locale={es}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Hora de Retiro</Label>
-                      <Select onValueChange={setHoraRetiro}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione la hora de retiro" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {horasDisponibles.map((hora) => (
-                            <SelectItem key={hora} value={hora}>
-                              {hora}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
+            {metodoEntregaModelo === 'radiologico' && (
+              <div className="space-y-2">
+                <FileDropzone 
+                  files={archivos}
+                  onDrop={(acceptedFiles) => {
+                    if (acceptedFiles.length > 0) {
+                      setArchivos(prev => [...prev, ...acceptedFiles]);
+                    }
+                  }}
+                  onDelete={(index) => {
+                    setArchivos(prev => prev.filter((_, i) => i !== index));
+                  }}
+                  acceptedFileTypes={{
+                    'application/dicom': ['.dicom', '.dcm'],
+                    'application/octet-stream': ['.dicom', '.dcm']
+                  }}
+                  fileTypeDescription="DICOM"
+                />
               </div>
             )}
 
             {metodoEntregaModelo === 'escaneo' && (
               <div className="space-y-2">
                 <Label>Fecha de Escaneo</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {fechaEscaneo ? format(fechaEscaneo, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={fechaEscaneo}
-                      onSelect={setFechaEscaneo}
-                      initialFocus
-                      locale={es}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Alert>
+                  <CalendarIcon className="h-4 w-4" />
+                  <AlertTitle>Agenda un escaneo</AlertTitle>
+                  <AlertDescription className='flex justify-start flex-col'>
+                    Debes agendar un escaneo en nuestro laboratorio para hacer un escaneo de tu paciente
+                    <Button className='flex-none text-xs uppercase text-white bg-sky-500 border p-2 rounded-md'>Agendar escaneo</Button>
+                  </AlertDescription>
+                </Alert>
               </div>
             )}
           </div>
@@ -437,7 +406,7 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
       </AccordionItem>
 
       <AccordionItem value="item-2">
-        <AccordionTrigger>2. Fotografías de paciente</AccordionTrigger>
+        <AccordionTrigger disabled>2. Fotografías de paciente</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-4">
@@ -485,74 +454,15 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
           </div>
         </AccordionContent>
       </AccordionItem>
-
-      <AccordionItem value="item-3">
-        <AccordionTrigger>3. Imágenes radiológicas para el estudio</AccordionTrigger>
-        <AccordionContent>
-          <div className="space-y-4">
-            <RadioGroup value={tipoImagenRadiologica} onValueChange={setTipoImagenRadiologica}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="imagenesRx" id="imagenesRx" />
-                <Label htmlFor="imagenesRx">Imágenes RX</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="coneBeam" id="coneBeam" />
-                <Label htmlFor="coneBeam">Cone beam (archivo .dicom o .dcm)</Label>
-              </div>
-            </RadioGroup>
-
-            {tipoImagenRadiologica === 'imagenesRx' && (
-              <div className="grid grid-cols-3 gap-4">
-                {['teleRxLateral', 'rxPanoramica'].map((tipo) => (
-                  <div key={tipo} className="space-y-2">
-                    <Label htmlFor={tipo}>{tipo === 'teleRxLateral' ? 'Tele Rx Lateral' : 'Rx Panorámica'}</Label>
-                    {imagenesRadiologicas[tipo] ? (
-                      <ImagePreview imagen={imagenesRadiologicas[tipo]!} onDelete={() => eliminarImagen(tipo)} />
-                    ) : (
-                      <DropZone tipo={tipo} onFileChange={manejarCambioArchivo}>
-                        <div className="flex flex-col items-center">
-                          <Upload className="h-8 w-8 mb-2" />
-                          <p className="text-xs">Arrastra o haz clic</p>
-                        </div>
-                      </DropZone>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {tipoImagenRadiologica === 'coneBeam' && (
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="coneBeamArchivo">Archivos .dicom o .dcm</Label>
-                  {imagenesRadiologicas.coneBeam ? (
-                    <div className="aspect-square flex items-center justify-center bg-gray-100 rounded-lg p-4">
-                      <div className="text-center">
-                        <p className="text-sm font-medium truncate">{imagenesRadiologicas.coneBeam.file.name}</p>
-                        <Button variant="destructive" size="sm" onClick={() => eliminarImagen('coneBeam')} className="mt-2">
-                          Eliminar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <DropZone tipo="coneBeam" onFileChange={manejarCambioArchivo}>
-                      <div className="flex flex-col items-center">
-                        <Upload className="h-8 w-8 mb-2" />
-                        <p className="text-xs">Arrastra o haz clic</p>
-                      </div>
-                    </DropZone>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
     </Accordion>
   )
 
   const agregarNuevoDropZone = () => {
     setFotografiasAdicionales(prev => [...prev, null])
+  }
+
+  const eliminarArchivo = (index: number) => {
+    setArchivos(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleCreateOrder = async () => {
@@ -611,17 +521,18 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
         })
       }
 
-      // Subir archivos si existen
-      if (archivo) {
-        const uploadedFile = await uploadFile(archivo, createdOrder.id, 'model3d');
-        // const formData = new FormData()
-        // formData.append('file', archivo);
-        // formData.append('order', createdOrder.id);
-        // formData.append('owner', pb.authStore.model?.id);
-        // const uploadedFile = await pb.collection('files').create(formData);
+      // Subir múltiples archivos si existen
+      if (archivos.length > 0) {
+        const uploadedFileIds = await Promise.all(
+          archivos.map(async (archivo) => {
+            const uploadedFile = await uploadFile(archivo, createdOrder.id, 'model3d');
+            return uploadedFile.id;
+          })
+        );
+
         await pb.collection('orders').update(createdOrder.id, {
-          model3d: uploadedFile.id,
-        })
+          model3d: uploadedFileIds,
+        });
       }
 
       // Subir fotografías
@@ -678,15 +589,136 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
     }
   }
 
+  const FileDropzone = ({ 
+    files, 
+    onDrop, 
+    onDelete, 
+    acceptedFileTypes,
+    fileTypeDescription
+  }) => {
+    const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
+      onDrop: (acceptedFiles, rejectedFiles) => {
+        if (rejectedFiles.length > 0) {
+          rejectedFiles.forEach(file => {
+            toast({
+              title: "Se ha rechazado el archivo " + file.file.name,
+              description: `Solo se permiten archivos ${fileTypeDescription}`,
+              variant: "destructive",
+            });
+          });
+        }
+        
+        onDrop(acceptedFiles);
+      },
+      accept: acceptedFileTypes,
+      multiple: true,
+      useFsAccessApi: false
+    });
+
+    return (
+      <div className="space-y-4">
+        <div className="border-2 border-dashed rounded-lg p-4">
+          {Array.isArray(files) && files.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                {files.map((file, index) => (
+                  <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white rounded-md">
+                        <UploadCloud className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete(index);
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div
+                {...getRootProps()}
+                className={`border-2 border-dashed rounded-md p-4 text-center cursor-pointer transition-colors
+                  ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-primary'}`}
+              >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center gap-2">
+                  <Plus className="h-6 w-6 text-gray-400" />
+                  <p className="text-sm text-gray-600">
+                    Agregar más archivos STL
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-colors
+                ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-primary'}`}
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center gap-3">
+                <UploadCloud className="h-12 w-12 text-gray-400" />
+                {isDragActive ? (
+                  <p className="text-sm text-gray-600">Suelta los archivos aquí...</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-700">
+                      Arrastra archivos {fileTypeDescription} aquí o
+                    </p>
+                    <p className="text-xs uppercase text-gray-500 border p-2 rounded-md">
+                      haz clic para seleccionar
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {fileRejections.length > 0 && (
+          <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+            Solo se permiten archivos STL. Los siguientes archivos fueron rechazados:
+            <ul className="mt-1 list-disc list-inside">
+              {fileRejections.map(({ file, errors }) => (
+                <li key={file.name}>
+                  {file.name} - {errors.map(e => e.message).join(', ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="w-full space-y-4">
-      <div className="flex flex-col">
+      <div className="flex flex-col space-y-2">
         <div className='text-xs text-muted-foreground'>
           Paso {paso} de 3 - {
             paso === 1 ? "Selección de cliente y organización" :
             paso === 2 ? "Detalles del alineador" :
             "Método de entrega y fotografías"
           }
+        </div>
+        <div className="flex">
+          {paso > 1 && (
+            <Button variant="outline" onClick={() => setPaso(paso - 1)}>
+              <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
+            </Button>
+          )}
         </div>
       </div>
       <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-1">

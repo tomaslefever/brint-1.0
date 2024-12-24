@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import PocketBase from 'pocketbase'
 import Image from 'next/image'
 import { Separator } from './ui/separator'
+import { Eye, EyeOff } from "lucide-react"
 const pb = new PocketBase('https://innovaligners.pockethost.io/')
 
 export default function LoginComponent() {
@@ -19,6 +20,7 @@ export default function LoginComponent() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -91,14 +93,27 @@ export default function LoginComponent() {
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Input 
-                id="password" 
-                type="password"
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
           {error && (
