@@ -396,7 +396,7 @@ export default function NewOrder({ onOrderCreated }: NewOrderProps) {
                   <AlertTitle>Agenda un escaneo</AlertTitle>
                   <AlertDescription className='flex justify-start flex-col'>
                     Debes agendar un escaneo en nuestro laboratorio para hacer un escaneo de tu paciente
-                    <Button className='flex-none text-xs uppercase text-white bg-sky-500 border p-2 rounded-md'>Agendar escaneo</Button>
+                    <Button className='flex-none text-xs uppercase text-white bg-sky-500 border p-2 rounded-md' onClick={() => window.open('https://www.dentalink.cl/', '_blank')}>Agendar escaneo</Button>
                   </AlertDescription>
                 </Alert>
               </div>
