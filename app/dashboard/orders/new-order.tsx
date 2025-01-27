@@ -39,6 +39,7 @@ import DropZone from '@/app/utils/DropZone'
 import { toast } from '@/hooks/use-toast'
 
 interface NewOrderProps {
+  customer_id?: string;
   onOrderCreated: () => void;
   onFormChange?: (content: string) => void;
 }
@@ -48,7 +49,7 @@ interface ImagenCargada {
   preview: string;
 }
 
-export default function NewOrder({ onOrderCreated }: NewOrderProps) {
+export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps) {
   const [paso, setPaso] = useState(1)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)

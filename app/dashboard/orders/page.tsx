@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
@@ -33,28 +33,30 @@ export default function OrdersPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-      <CardTitle className='text-2xl'>Órdenes</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Input
-              placeholder="Buscar órdenes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-            <Link href="/dashboard/orders/new">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Nueva Orden
-              </Button>
-            </Link>
+    <Suspense fallback={<div>Cargando...</div>}>
+      <Card>
+        <CardHeader>
+        <CardTitle className='text-2xl'>Órdenes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Input
+                placeholder="Buscar órdenes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+              <Link href="/dashboard/orders/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Nueva Orden
+                </Button>
+              </Link>
+            </div>
+            <OrderList searchTerm={searchTerm} refreshTrigger={refreshTrigger} />
           </div>
-          <OrderList searchTerm={searchTerm} refreshTrigger={refreshTrigger} />
-        </div>
-      </CardContent>
+        </CardContent>
+      </Card>
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
@@ -69,6 +71,6 @@ export default function OrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </Suspense>
   )
 }

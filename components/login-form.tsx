@@ -21,6 +21,8 @@ export default function LoginComponent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [passwordRecover, setPasswordRecover] = useState(false)
+
   const router = useRouter()
 
   useEffect(() => {
@@ -39,7 +41,6 @@ export default function LoginComponent() {
     try {
       const authData = await pb.collection('users').authWithPassword(email, password)
       
-      // Actualizar el campo 'last_login' del usuario
       await pb.collection('users').update(authData.record.id, {
         last_login: new Date().toISOString(),
       })
@@ -48,13 +49,39 @@ export default function LoginComponent() {
       setIsAuthenticated(true)
       router.push('/dashboard')
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message || 'Failed to login. Please check your credentials.')
+      if (err instanceof Error && err.message.includes('no rows in result set')) {
+        setError('Datos incorrectos')
+      } else if (err instanceof Error) {
+        setError('Datos incorrectos')
       } else {
-        setError('An unexpected error occurred.')
+        setError('Datos incorrectos')
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordRecover = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Por favor, ingresa tu correo electrónico para recuperar tu contraseña');
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await pb.collection('users').requestPasswordReset(email);
+      setError('');
+      setPasswordRecover(false);
+      alert('Se ha enviado un correo con las instrucciones para recuperar tu contraseña');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || 'No se pudo enviar el correo de recuperación');
+      } else {
+        setError('Ocurrió un error inesperado');
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -75,8 +102,12 @@ export default function LoginComponent() {
         <Image src="/img/logo.png" alt="Logo" width={200} height={100} />
         <Separator className='w-full my-4' />
         <div className="flex flex-col items-center space-y-2">
-        <CardTitle>Inicia sesión</CardTitle>
-        <CardDescription className='text-center'>Ingresa tus credenciales para acceder a tu cuenta</CardDescription>
+          <CardTitle>{passwordRecover ? 'Recuperar contraseña' : 'Inicia sesión'}</CardTitle>
+          <CardDescription className='text-center'>
+            {passwordRecover 
+              ? 'Ingresa tu correo electrónico para recibir un enlace de recuperación' 
+              : 'Ingresa tus credenciales para acceder a tu cuenta'}
+          </CardDescription>
         </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -92,29 +123,31 @@ export default function LoginComponent() {
                 required
               />
             </div>
-            <div className="flex flex-col space-y-1.5">
-              <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+            {!passwordRecover && (
+              <div className="flex flex-col space-y-1.5">
+                <div className="relative">
+                  <Input 
+                    id="password" 
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           {error && (
             <Alert variant="destructive" className="mt-4">
@@ -122,10 +155,36 @@ export default function LoginComponent() {
             </Alert>
           )}
         </CardContent>
-        <CardFooter>
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? 'Autenticando...' : 'Ingresar'}
-          </Button>
+        <CardFooter className='flex flex-col space-y-3'>
+          {passwordRecover ? (
+            <Button 
+              className="w-full" 
+              type="button" 
+              onClick={handlePasswordRecover}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Enviando...' : 'Enviar link de recuperación'}
+            </Button>
+          ) : (
+            <>
+              <Button className="w-full" type="submit" disabled={isLoading}>
+                {isLoading ? 'Autenticando...' : 'Ingresar'}
+              </Button>
+              <div>
+                <Button 
+                  variant='link' 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPasswordRecover(true);
+                  }}
+                  disabled={isLoading}
+                >
+                  Olvidé mi contraseña
+                </Button>
+              </div>
+            </>
+          )}
         </CardFooter>
       </form>
     </Card>

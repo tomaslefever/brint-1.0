@@ -116,8 +116,8 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
         comuna: "Comuna",
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderInput = (key: string, field: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (
             <FormItem className="space-y-0">
                 <FormLabel className="text-xs text-muted-foreground">{labels[key as keyof typeof labels]}</FormLabel>
@@ -131,7 +131,10 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
                                         placeholder={placeholders.phone}
                                         {...field}
                                     >
-                                        {(inputProps: any) => <Input {...inputProps} />}
+                                        {
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        (inputProps: any) => <Input {...inputProps} />
+                                        }
                                     </InputMask>
                                 )
                             case 'email':
@@ -152,7 +155,8 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
                                             field.onChange(RUT.format(e.target.value))
                                         }}
                                     >
-                                        {(inputProps: any) => <Input {...inputProps} />}
+                                        {// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        (inputProps: any) => <Input {...inputProps} />}
                                     </InputMask>
                                 )
                                 case 'comuna': 

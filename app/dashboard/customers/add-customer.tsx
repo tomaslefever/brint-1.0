@@ -1,3 +1,5 @@
+/*eslint no-unused-vars: "error"*/
+
 'use client'
 
 import { useState, useEffect } from "react"
@@ -18,12 +20,12 @@ import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Plus } from "lucide-react"
 import pb from '@/app/actions/pocketbase'
-import { Customer } from '@/types/customer'
-import { useRouter } from 'next/navigation'
+// import { Customer } from '@/types/customer'
+// import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import RUT from 'rut-chile';
-import { Label } from "@/components/ui/label"
+// import { Label } from "@/components/ui/label"
 
 const customerSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
@@ -46,7 +48,7 @@ interface AddCustomerProps {
 
 const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
     const [isOpen, setIsOpen] = useState(false)
-    const router = useRouter()
+    // const router = useRouter()
     const { toast } = useToast()
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
@@ -118,6 +120,7 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
         phone: "Teléfono",
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderInput = (key: string, field: any) => {
         return (
             <FormItem className="space-y-0">
@@ -143,7 +146,7 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
                                         placeholder={placeholders.phone}
                                         {...field}
                                     >
-                                        {(inputProps: any) => <Input {...inputProps} />}
+                                        {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/(inputProps: any) => <Input {...inputProps} />}
                                     </InputMask>
                                 )
                             case 'email':

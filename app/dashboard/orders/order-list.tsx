@@ -27,7 +27,7 @@ import es from 'javascript-time-ago/locale/es'
 import { useRouter } from 'next/navigation'
 
 // Configurar TimeAgo (esto debería estar en un archivo de configuración global)
-TimeAgo.addDefaultLocale(es)
+TimeAgo.addLocale(es)
 const timeAgo = new TimeAgo('es-ES')
 
 interface OrderListProps {

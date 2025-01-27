@@ -11,11 +11,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Box, MoreHorizontal, Pencil, Trash, CircleX } from "lucide-react"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import PocketBase from 'pocketbase'
 import { Company } from '@/types/company'
 import { useToast } from "@/hooks/use-toast"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -31,7 +35,9 @@ export default function CompaniesList({ searchTerm, refreshTrigger, onRefreshTri
   const [companies, setCompanies] = useState<Company[]>([])
   const { toast } = useToast()
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

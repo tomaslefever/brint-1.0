@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Bell, LayoutDashboard, ShoppingBag, FileText, Users, Settings, ChevronRight, UserCheck, Box } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ import { EditOrderSheet } from './orders/edit-order-sheet'
 import { useRouter } from 'next/navigation'
 import OrderList from './orders/order-list'
 
-TimeAgo.addDefaultLocale(es)
+TimeAgo.addLocale(es)
 const timeAgo = new TimeAgo('es-ES')
 
 const locales = {
@@ -159,10 +159,12 @@ export default function Dashboard() {
             <CardDescription>Últimas 5 órdenes ingresadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <OrderList 
-              searchTerm=""
-              refreshTrigger={0}
-            />
+            <Suspense fallback={<div>Cargando órdenes...</div>}>
+              <OrderList 
+                searchTerm=""
+                refreshTrigger={0}
+              />
+            </Suspense>
           </CardContent>
         </Card>
 

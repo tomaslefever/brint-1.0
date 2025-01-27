@@ -28,7 +28,7 @@ import "yet-another-react-lightbox/styles.css";
 import { SelectGroup } from '@radix-ui/react-select'
 import { CubeIcon } from '@radix-ui/react-icons'
 
-TimeAgo.addDefaultLocale(es)
+TimeAgo.addLocale(es)
 const timeAgo = new TimeAgo('es-ES')
 
 interface EditOrderSheetProps {
@@ -298,8 +298,16 @@ export function EditOrderSheet({ orderId, isOpen, onClose, onOrderUpdated }: Edi
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-500">Modelo 3D</span>
                         <div className='flex justify-between items-center gap-2'>
-                          <span className='text-xs text-muted-foreground'>{order.expand?.model3d?.attachment} <span className='font-bold'>({order.expand?.model3d?.attachment.split('.')[0].length} KB)</span></span>
-                          <Link target="_blank" href={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${order.expand?.model3d?.id}/${order.expand?.model3d?.attachment}`} className="p-2 gap-2 transition-all hover:bg-transparent hover:text-slate-500 border border-gray-300 flex items-center justify-center rounded-md ">Descargar <Download className="h-3 w-3" /></Link>
+                          <span className='text-xs text-muted-foreground'>
+                            {order.expand?.model3d?.[0]?.attachment} 
+                            <span className='font-bold'>({order.expand?.model3d?.[0]?.attachment.split('.')[0].length} KB)</span>
+                          </span>
+                          <Link 
+                            target="_blank" 
+                            href={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${order.expand?.model3d?.[0]?.id}/${order.expand?.model3d?.[0]?.attachment}`} 
+                            className="p-2 gap-2 transition-all hover:bg-transparent hover:text-slate-500 border border-gray-300 flex items-center justify-center rounded-md">
+                            Descargar <Download className="h-3 w-3" />
+                          </Link>
                         </div>
                       </div>
                     )}
