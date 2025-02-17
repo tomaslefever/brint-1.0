@@ -41,7 +41,7 @@ export default function ProposalsPage() {
       rejected: 'bg-red-100 text-red-800'
     }
     const statusText = {
-      pending: 'Pendiente',
+      pending: 'Pendiente aceptación archivos',
       accepted: 'Aceptada',
       rejected: 'Rechazada'
     }

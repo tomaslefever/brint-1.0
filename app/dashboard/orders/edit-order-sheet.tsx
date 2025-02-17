@@ -104,7 +104,7 @@ export function EditOrderSheet({ orderId, isOpen, onClose, onOrderUpdated }: Edi
     })
     createNotification({
       userId: pb.authStore.model?.id,
-      message: `Estado de la orden ${order?.id} actualizado a ${status === 'pending' ? 'Pendiente' : status === 'working' ? 'En Progreso' : status === 'complete' ? 'Completado' : status === 'canceled' ? 'Cancelado' : status === 'paused' ? 'Pausado' : ''}`,
+      message: `Estado de la orden ${order?.id} actualizado a ${status === 'pending' ? 'Pendiente aceptación archivos' : status === 'working' ? 'En Progreso' : status === 'complete' ? 'Completado' : status === 'canceled' ? 'Cancelado' : status === 'paused' ? 'Pausado' : ''}`,
       type: 'info',
       orderId: orderId!
     });
@@ -240,7 +240,7 @@ export function EditOrderSheet({ orderId, isOpen, onClose, onOrderUpdated }: Edi
                     <SelectValue placeholder="Selecciona un estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending" className="font-normal bg-gray-100 text-black hover:bg-yellow-700">Pendiente</SelectItem>
+                    <SelectItem value="pending" className="font-normal text-black bg-yellow-700">Pendiente aceptación archivos</SelectItem>
                     <SelectItem value="working" className="font-normal bg-blue-600 hover:bg-blue-700 text-white">En Progreso</SelectItem>
                     <SelectItem value="paused" className="font-normal bg-yellow-600 hover:bg-yellow-700 text-white">Pausado</SelectItem>
                     <SelectItem value="canceled" className="font-normal bg-red-600 hover:bg-red-700 text-white">Cancelado</SelectItem>

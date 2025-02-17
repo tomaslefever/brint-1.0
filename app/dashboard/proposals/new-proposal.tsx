@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from 'next/navigation'
 import pb from '@/app/actions/pocketbase'
-import { ChevronLeft, ChevronRight, Upload, Plus, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Upload, Plus, X, Video } from 'lucide-react'
 import { ProposalCard } from '@/components/dashboard/proposal-card'
 import { Proposal } from '@/types/proposal'
 import DropZone from '@/app/utils/DropZone'
@@ -22,6 +22,11 @@ interface NewProposalProps {
 interface ImagenCargada {
   file: File;
   preview: string;
+}
+
+interface VideoCargado {
+  file: File;
+  name: string;
 }
 
 interface Comparison {
@@ -39,11 +44,14 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
   // Estados para el formulario - nombres actualizados según la interfaz
   const [details, setDetails] = useState('')
   const [duration, setDuration] = useState('')
-  const [aligners_count, setAlignersCount] = useState('')
+  const [upper_aligners_count, setUpperAlignersCount] = useState('')
+  const [lower_aligners_count, setLowerAlignersCount] = useState('')
+  const [treatment_plan, setTreatmentPlan] = useState('light_single')
   const [price, setPrice] = useState('')
   const [comments, setComments] = useState('')
   const [status, setStatus] = useState('pending')
   const [comparisons, setComparisons] = useState<Comparison[]>([])
+  const [videos, setVideos] = useState<VideoCargado[]>([])
 
   const addNewComparison = () => {
     const newComparison: Comparison = {
@@ -106,6 +114,20 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
     </div>
   )
 
+  const handleVideosDrop = (files: FileList | null) => {
+    if (files) {
+      const newVideos = Array.from(files).map(file => ({
+        file,
+        name: file.name
+      }));
+      setVideos(prev => [...prev, ...newVideos]);
+    }
+  }
+
+  const removeVideo = (index: number) => {
+    setVideos(prev => prev.filter((_, i) => i !== index));
+  }
+
   const renderPaso1 = () => (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -119,6 +141,22 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
+          <Label htmlFor="treatment_plan">Plan de Tratamiento</Label>
+          <select
+            id="treatment_plan"
+            className="w-full rounded-md border border-input bg-background px-3 py-2"
+            value={treatment_plan}
+            onChange={(e) => setTreatmentPlan(e.target.value)}
+          >
+            <option value="light_single">Light 1 Maxilar</option>
+            <option value="light_double">Light 2 Maxilares</option>
+            <option value="medium_single">Medio 1 Maxilar</option>
+            <option value="medium_double">Medio 2 Maxilares</option>
+            <option value="full_single">Full 1 Maxilar</option>
+            <option value="full_double">Full 2 Maxilares</option>
+          </select>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="duration">Duración Estimada</Label>
           <Input 
             id="duration"
@@ -127,14 +165,27 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
             onChange={(e) => setDuration(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="aligners_count">Cantidad de Alineadores</Label>
+          <Label htmlFor="upper_aligners_count">Cantidad Maxilar Superior</Label>
           <Input 
-            id="aligners_count"
+            id="upper_aligners_count"
             type="number"
             placeholder="ej: 12"
-            value={aligners_count}
-            onChange={(e) => setAlignersCount(e.target.value)}
+            value={upper_aligners_count}
+            onChange={(e) => setUpperAlignersCount(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lower_aligners_count">Cantidad Mandíbula</Label>
+          <Input 
+            id="lower_aligners_count"
+            type="number"
+            placeholder="ej: 12"
+            value={lower_aligners_count}
+            onChange={(e) => setLowerAlignersCount(e.target.value)}
           />
         </div>
       </div>
@@ -150,7 +201,7 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
       
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <Label>Comparaciones</Label>
+          <Label>Imágenes y videos de plan de tratamiento</Label>
           <Button 
             type="button" 
             variant="outline" 
@@ -164,7 +215,7 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
 
         <div className="space-y-4">
           {comparisons.map((comparison) => (
-            <div key={comparison.id} className="border rounded-lg p-4 relative max-w-96">
+            <div key={comparison.id} className="border rounded-lg p-4 relative">
               <button 
                 onClick={() => removeComparison(comparison.id)}
                 className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full"
@@ -216,6 +267,39 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
             </div>
           ))}
         </div>
+
+        <div className="mt-6 space-y-4">
+          <Label>Videos del tratamiento</Label>
+          <div className="grid gap-4 max-w-72">
+            <DropZone 
+              tipo="videos"
+              onFileChange={handleVideosDrop}
+              accept="video/*"
+            >
+              <div className="flex flex-col items-center">
+                <Video className="h-8 w-8 mb-2" />
+                <p className="text-xs">Arrastra o haz clic para subir videos</p>
+              </div>
+            </DropZone>
+
+            {videos.length > 0 && (
+              <div className="grid gap-2">
+                {videos.map((video, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 border rounded">
+                    <span className="text-sm truncate">{video.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeVideo(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -249,7 +333,7 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
   )
 
   const handleCreateProposal = async () => {
-    if (!details || !duration || !aligners_count || !price) {
+    if (!details || !duration || !upper_aligners_count || !lower_aligners_count || !price || !treatment_plan) {
       setError('Por favor, complete todos los campos requeridos.')
       return
     }
@@ -260,6 +344,7 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
     try {
       // Subir las imágenes de comparación secuencialmente
       const uploadedComparisons = [];
+      const uploadedVideos = [];
       
       for (const comp of comparisons) {
         let beforeFile = null;
@@ -287,6 +372,18 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
         });
       }
 
+      // Subir videos
+      for (const video of videos) {
+        const uploadedVideo = await uploadFile(
+          video.file,
+          orderId,
+          'videos'
+        );
+        if (uploadedVideo?.id) {
+          uploadedVideos.push(uploadedVideo.id);
+        }
+      }
+
       // Crear array plano de IDs
       const comparisonFiles = uploadedComparisons.reduce((acc, comp) => {
         if (comp.before_image) acc.push(comp.before_image);
@@ -298,13 +395,16 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
         order: orderId,
         details,
         duration,
-        aligners_count,
+        upper_aligners_count,
+        lower_aligners_count,
+        treatment_plan,
         price,
         comments,
         created_by: pb.authStore.model?.id,
         status: 'pending',
         created: new Date().toISOString(),
-        comparisons: comparisonFiles
+        comparisons: comparisonFiles,
+        videos: uploadedVideos
       }
 
       const createdProposal = await pb.collection('proposals').create(proposalData)

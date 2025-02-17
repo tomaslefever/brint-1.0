@@ -40,6 +40,9 @@ const userSchema = z.object({
     role: z.enum(["admin", "author", "client", "editor", "doctor"], {
         required_error: "Por favor seleccione un rol",
     }),
+    category: z.enum(["Base", "Bronce", "Plata", "Oro"], {
+        required_error: "Por favor seleccione una categoría",
+    }),
     company: z.string(),
 })
 
@@ -74,6 +77,7 @@ export function CreateUser({ onUserAdded }: CreateUserProps) {
             name: "",
             lastname: "",
             role: "doctor",
+            category: "Base",
             company: "",
         },
     })
@@ -302,18 +306,45 @@ export function CreateUser({ onUserAdded }: CreateUserProps) {
                                             <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
                                                 Rol
                                             </label>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger id="role">
-                                                    <SelectValue placeholder="Seleccione un rol" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="admin">Administrador</SelectItem>
-                                                <SelectItem value="doctor">Doctor</SelectItem>
-                                                <SelectItem value="author">Autor</SelectItem>
-                                                <SelectItem value="client">Cliente</SelectItem>
-                                                <SelectItem value="editor">Editor</SelectItem>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger id="role">
+                                                        <SelectValue placeholder="Seleccione un rol" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="admin">Administrador</SelectItem>
+                                                    <SelectItem value="doctor">Doctor</SelectItem>
+                                                    <SelectItem value="author">Autor</SelectItem>
+                                                    <SelectItem value="client">Cliente</SelectItem>
+                                                    <SelectItem value="editor">Editor</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div>
+                                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Categoría del Doctor
+                                            </label>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger id="category">
+                                                        <SelectValue placeholder="Seleccione una categoría" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Base">Base</SelectItem>
+                                                    <SelectItem value="Bronce">Bronce</SelectItem>
+                                                    <SelectItem value="Plata">Plata</SelectItem>
+                                                    <SelectItem value="Oro">Oro</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

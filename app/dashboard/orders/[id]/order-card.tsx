@@ -57,17 +57,18 @@ const updateStatus = async (status: string) => {
     createNotification({
         userId: status == 'order_approved' || status == 'working' || status == 'shipping' || status == 'complete' || status == 'proposal_sent' ? order.expand?.created_by.id : '',
         message: `Estado de la orden ${order?.id} actualizado a ${
-          status === 'pending' ? 'Pendiente' : 
-          status === 'working' ? 'Piezas en fabricación' : 
-          status === 'shipping' ? 'Piezas enviadas' :
+          status === 'pending' ? 'Pendiente aceptación archivos' : 
+          status === 'working' ? 'Alineadores en producción' : 
+          status === 'shipping' ? 'Alineadores enviados' :
           status === 'complete' ? 'Trabajo completado' : 
           status === 'canceled' ? 'Cancelado' : 
           status === 'paused' ? 'Pausado' : 
           status === 'proposal_sent' ? 'Propuesta enviada': 
-          status === 'order_approved' ? 'Orden aprobada': 
-          status === 'order_rejected' ? 'Orden rechazada': 
-          status === 'meeting_scheduled' ? 'Reunión agendada': 
-          status === 'meeting_completed' ? 'Reunión completada': ''}`,
+          status === 'proposal_accepted' ? 'Solicitud alineadores': 
+          status === 'order_approved' ? 'Archivos aceptados': 
+          status === 'order_rejected' ? 'Archivos con inconsistencias': 
+          status === 'meeting_scheduled' ? 'Reunión virtual agendada': 
+          status === 'meeting_completed' ? 'En espera de propuesta de Innovaligners': ''}`,
         type: 'info',
         orderId: order.id!
     });
@@ -190,18 +191,24 @@ const updateStatus = async (status: string) => {
             </CardContent>
             {pb.authStore.model?.role == 'admin' && order.status == 'pending' && (
             <CardFooter className="flex gap-2">
-              <Button className="bg-green-700 gap-2" onClick={() => updateStatus('order_approved')}><Check className="w-4"></Check>Aprobar orden</Button>
-              <Button className="gap-2 bg-red-700" onClick={() => updateStatus('order_rejected')}><X className="w-4"></X> Rechazar orden</Button>
+              <Button className="bg-green-700 gap-2" onClick={() => updateStatus('order_approved')}><Check className="w-4"></Check>Aceptar archivos</Button>
+              <Button className="gap-2 bg-red-700" onClick={() => updateStatus('order_rejected')}><X className="w-4"></X> Archivos con inconsistencias</Button>
             </CardFooter>
             )}
-            {order.status == 'meeting_scheduled' && pb.authStore.model?.role == 'admin' && (
+            {order.status == 'meeting_scheduled' || order.status == 'meeting_completed' && pb.authStore.model?.role == 'admin' && (
               <CardFooter className="flex gap-2">
                 <Link href={`/dashboard/orders/${order.id}/new-proposal`}><Button>Crear plan de tratamiento</Button></Link>
               </CardFooter>
             )}
             {order.status == 'order_approved' && pb.authStore.model?.role == 'doctor' && (
               <CardFooter className="flex gap-2">
-                <Button className="gap-2" onClick={() => updateStatus('meeting_scheduled')}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
+                <Button className="gap-2" onClick={() => {
+                  updateStatus('meeting_scheduled');
+                  window.open('https://calendly.com/innovaligners', '_blank');
+                }}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
+                <Button className="gap-2" onClick={() => {
+                  updateStatus('meeting_completed')
+                  }}><Calendar className="w-4 h-4"></Calendar> Esperar propuesta de Innovaligners</Button>
               </CardFooter>
             )}
             <Lightbox

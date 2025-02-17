@@ -30,6 +30,8 @@ import RUT from 'rut-chile';
 const customerSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
     lastname: z.string().min(1, "El apellido es requerido"),
+    surname: z.string().min(1, "El segundo apellido es requerido"),
+    age: z.string().min(1, "La edad es requerida"),
     rut: z.string()
         .min(1, "El RUT es requerido")
         .refine((val) => RUT.validate(val), {
@@ -57,6 +59,8 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
         defaultValues: {
             name: "",
             lastname: "",
+            surname: "",
+            age: "",
             rut: "",
             address: "",
             email: "",
@@ -104,7 +108,9 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
 
     const placeholders = {
         name: "Nombres",
-        lastname: "Apellidos",
+        lastname: "Primer Apellido",
+        surname: "Segundo Apellido",
+        age: "Edad",
         rut: "12.345.678-9",
         address: "Dirección",
         email: "correo@ejemplo.com",
@@ -113,7 +119,9 @@ const AddCustomer: React.FC<AddCustomerProps> = ({ onCustomerAdded }) => {
 
     const labels = {
         name: "Nombres",
-        lastname: "Apellidos",
+        lastname: "Primer Apellido",
+        surname: "Segundo Apellido",
+        age: "Edad",
         rut: "RUT",
         address: "Dirección",
         email: "Correo electrónico",

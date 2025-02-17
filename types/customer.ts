@@ -4,6 +4,8 @@ export type Customer = {
     id: string;
     name: string | null;
     lastname: string | null;
+    surname: string | null;
+    age: string | null;
     rut: string | null;
     address: string | null;
     email: string | null;

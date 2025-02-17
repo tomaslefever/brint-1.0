@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { CalendarIcon, Upload, Info, ChevronRight, ChevronLeft, X, Plus, UploadCloud, AlertCircle, Link, Terminal } from 'lucide-react'
+import { CalendarIcon, Upload, Info, ChevronRight, ChevronLeft, X, Plus, UploadCloud, AlertCircle, Link, Terminal, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useDropzone } from 'react-dropzone';
@@ -16,6 +16,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Popover,
   PopoverContent,
@@ -55,6 +64,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const router = useRouter()
 
   const opcionesTratamiento = [
@@ -92,7 +102,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     lateralReposo: null,
   })
   const [fotografiasAdicionales, setFotografiasAdicionales] = useState<(ImagenCargada | null)[]>([])
-  const [tipoImagenRadiologica, setTipoImagenRadiologica] = useState('')
+  const [tipoImagenRadiologica, setTipoImagenRadiologica] = useState('imagenesRx')
   const [imagenesRadiologicas, setImagenesRadiologicas] = useState<{[key: string]: ImagenCargada | null}>({
     teleRxLateral: null,
     rxPanoramica: null,
@@ -226,6 +236,11 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     }))
   }
 
+  const handleClientSelect = (clientId: string) => {
+    console.log('Cliente seleccionado:', clientId);
+    setSelectedCustomerId(clientId);
+  }
+
   const renderPaso1 = () => (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -238,7 +253,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
       <div className="space-y-2">
         <Label htmlFor="cliente">Datos del paciente</Label>
         <SelectClients 
-          onClientSelect={(clientId) => setSelectedCustomerId(clientId)}
+          onClientSelect={handleClientSelect}
           selectedClientId={selectedCustomerId}
         />
       </div>
@@ -330,9 +345,9 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   )
 
   const renderPaso3 = () => (
-    <Accordion type="multiple" defaultValue={["item-1", "item-2"]} className="w-full">
+    <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3"]} className="w-full">
       <AccordionItem value="item-1">
-        <AccordionTrigger disabled>1. Método de Entrega del Modelo</AccordionTrigger>
+        <AccordionTrigger disabled>1. Envio de modelos digitales</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-4">
             <Select value={metodoEntregaModelo} onValueChange={setMetodoEntregaModelo}>
@@ -341,7 +356,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="digital">Digital (archivos STL)</SelectItem>
-                <SelectItem value="radiologico">Imagen radiologica (archivo DICOM o DCM)</SelectItem>
+                <SelectItem value="3shape">Enviar por comunícate 3Shape</SelectItem>
                 <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem>
                 {/* <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem> */}
               </SelectContent>
@@ -368,24 +383,15 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
               </div>
             )}
 
-            {metodoEntregaModelo === 'radiologico' && (
+            {metodoEntregaModelo === '3shape' && (
               <div className="space-y-2">
-                <FileDropzone 
-                  files={archivos}
-                  onDrop={(acceptedFiles) => {
-                    if (acceptedFiles.length > 0) {
-                      setArchivos(prev => [...prev, ...acceptedFiles]);
-                    }
-                  }}
-                  onDelete={(index) => {
-                    setArchivos(prev => prev.filter((_, i) => i !== index));
-                  }}
-                  acceptedFileTypes={{
-                    'application/dicom': ['.dicom', '.dcm'],
-                    'application/octet-stream': ['.dicom', '.dcm']
-                  }}
-                  fileTypeDescription="DICOM"
-                />
+                <Alert variant='info'>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Instrucciones para envío vía 3shape Communicate</AlertTitle>
+                    <AlertDescription>
+                      Por favor enviar a cuenta communicate: digital@innova4d.cl
+                    </AlertDescription>
+                  </Alert>
               </div>
             )}
 
@@ -397,7 +403,10 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                   <AlertTitle>Agenda un escaneo</AlertTitle>
                   <AlertDescription className='flex justify-start flex-col'>
                     Debes agendar un escaneo en nuestro laboratorio para hacer un escaneo de tu paciente
-                    <Button className='flex-none text-xs uppercase text-white bg-sky-500 border p-2 rounded-md' onClick={() => window.open('https://www.dentalink.cl/', '_blank')}>Agendar escaneo</Button>
+                    <Button className='flex-none text-xs uppercase text-white bg-sky-500 border p-2 rounded-md' onClick={(e) => {
+                      e.preventDefault();
+                      window.open('https://www.dentalink.cl/', '_blank');
+                    }}>Agendar escaneo</Button>
                   </AlertDescription>
                 </Alert>
               </div>
@@ -455,6 +464,70 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           </div>
         </AccordionContent>
       </AccordionItem>
+      
+      
+      <AccordionItem value="item-3">
+        <AccordionTrigger>3. Imágenes radiológicas</AccordionTrigger>
+        <AccordionContent>
+          <div className="space-y-4">
+            <RadioGroup value={tipoImagenRadiologica} onValueChange={setTipoImagenRadiologica}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="imagenesRx" id="imagenesRx"/>
+                <Label htmlFor="imagenesRx">Imágenes RX</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="coneBeam" id="coneBeam" />
+                <Label htmlFor="coneBeam">Cone beam (archivo .dicom o .dcm)</Label>
+              </div>
+            </RadioGroup>
+
+            {tipoImagenRadiologica === 'imagenesRx' && (
+              <div className="grid grid-cols-3 gap-4">
+                {['teleRxLateral', 'rxPanoramica'].map((tipo) => (
+                  <div key={tipo} className="space-y-2">
+                    <Label htmlFor={tipo}>{tipo === 'teleRxLateral' ? 'Tele Rx Lateral' : 'Rx Panorámica'}</Label>
+                    {imagenesRadiologicas[tipo] ? (
+                      <ImagePreview imagen={imagenesRadiologicas[tipo]!} onDelete={() => eliminarImagen(tipo)} />
+                    ) : (
+                      <DropZone tipo={tipo} onFileChange={manejarCambioArchivo}>
+                        <div className="flex flex-col items-center">
+                          <Upload className="h-8 w-8 mb-2" />
+                          <p className="text-xs">Arrastra o haz clic</p>
+                        </div>
+                      </DropZone>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tipoImagenRadiologica === 'coneBeam' && (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="coneBeamArchivo">Archivos .dicom o .dcm</Label>
+                  {imagenesRadiologicas.coneBeam ? (
+                    <div className="aspect-square flex items-center justify-center bg-gray-100 rounded-lg p-4">
+                      <div className="text-center">
+                        <p className="text-sm font-medium truncate">{imagenesRadiologicas.coneBeam.file.name}</p>
+                        <Button variant="destructive" size="sm" onClick={() => eliminarImagen('coneBeam')} className="mt-2">
+                          Eliminar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <DropZone tipo="coneBeam" onFileChange={manejarCambioArchivo}>
+                      <div className="flex flex-col items-center">
+                        <Upload className="h-8 w-8 mb-2" />
+                        <p className="text-xs">Arrastra o haz clic</p>
+                      </div>
+                    </DropZone>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
     </Accordion>
   )
 
@@ -470,6 +543,32 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     if (!selectedCustomerId || !selectedCompanyId) {
       setError('Por favor, seleccione un cliente y una organización.')
       return
+    }
+
+    // Validación de imágenes obligatorias
+    const faltantes = [];
+    
+    // Validar fotografías obligatorias
+    if (!fotografias.frontalSonrisa) {
+      faltantes.push('Fotografía frontal sonrisa');
+    }
+    if (!fotografias.lateralSonrisa) {
+      faltantes.push('Fotografía lateral sonrisa');
+    }
+
+    // Validar radiografías obligatorias
+    if (tipoImagenRadiologica === 'imagenesRx') {
+      if (!imagenesRadiologicas.rxPanoramica) {
+        faltantes.push('Radiografía panorámica');
+      }
+      if (!imagenesRadiologicas.teleRxLateral) {
+        faltantes.push('Tele Rx Lateral');
+      }
+    }
+
+    if (faltantes.length > 0) {
+      setError(`Por favor, cargue las siguientes imágenes obligatorias:\n${faltantes.join('\n')}`);
+      return;
     }
 
     setIsLoading(true)
@@ -580,8 +679,15 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
         orderId: createdOrder.id
       })
 
-      onOrderCreated()
-      router.push('/dashboard/orders')
+      setShowSuccessDialog(true)
+      
+      // Esperar 3 segundos antes de redirigir
+      setTimeout(() => {
+        setShowSuccessDialog(false)
+        onOrderCreated()
+        router.push('/dashboard/orders')
+      }, 5000)
+
     } catch (error) {
       console.error('Error al crear el pedido:', error)
       setError('Hubo un error al crear el pedido. Por favor, inténtelo de nuevo.')
@@ -676,7 +782,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 ) : (
                   <>
                     <p className="text-sm font-medium text-gray-700">
-                      Arrastra archivos {fileTypeDescription} aquí o
+                      Arrastra archivos <strong>Maxilar superior</strong> y <strong>Mandíbula</strong> en formato STL aquí o
                     </p>
                     <p className="text-xs uppercase text-gray-500 border p-2 rounded-md">
                       haz clic para seleccionar
@@ -711,7 +817,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           Paso {paso} de 3 - {
             paso === 1 ? "Selección de cliente y organización" :
             paso === 2 ? "Detalles del alineador" :
-            "Método de entrega y fotografías"
+            "Envio de archivos, fotografías e imágenes radiologicas"
           }
         </div>
         <div className="flex">
@@ -753,10 +859,31 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           </Button>
         )}
       </div>
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Orden Creada con Éxito
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Innovaligners debe aceptar los archivos para continuar Programación de reunión virtual.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Entendido</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {error && (
-        <div className="text-red-500 text-sm mt-2">
-          {error}
-        </div>
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="whitespace-pre-line">
+            {error}
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   )

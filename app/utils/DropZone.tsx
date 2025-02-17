@@ -5,9 +5,10 @@ interface DropZoneProps {
   tipo: string;
   children?: React.ReactNode;
   onFileChange: (files: FileList | null, tipo: string) => void;
+  accept?: string;
 }
 
-export default function DropZone({ tipo, children, onFileChange }: DropZoneProps) {
+export default function DropZone({ tipo, children, onFileChange, accept = "image/*" }: DropZoneProps) {
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -28,7 +29,7 @@ export default function DropZone({ tipo, children, onFileChange }: DropZoneProps
       <Input
         type="file"
         onChange={(e) => onFileChange(e.target.files, tipo)}
-        accept="image/*"
+        accept={accept}
         className="hidden"
         id={`file-input-${tipo}`}
       />

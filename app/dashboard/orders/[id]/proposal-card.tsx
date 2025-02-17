@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { FileCheck2, Clock, DollarSign, MessageSquare, Check, X, Box, Truck, Images } from "lucide-react"
+import { FileCheck2, Clock, DollarSign, MessageSquare, Check, X, Box, Truck, Images, Video } from "lucide-react"
 import { Proposal } from "@/types/proposal"
 import { Button } from "@/components/ui/button"
 import { pb } from "@/lib/pocketbase"
@@ -73,7 +73,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                 <Images className="w-4 h-4" /> Comparaciones ({proposal.expand?.comparisons?.length || 0})
               </span>
             </AccordionTrigger>
-            <AccordionContent className='grid grid-cols-2 gap-2 max-w-96'>
+            <AccordionContent className='grid grid-cols-2 gap-2'>
               {proposal.expand?.comparisons?.map((value, index) => (
                 <div className="flex flex-col gap-2">
                   <img 
@@ -90,21 +90,60 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
             </AccordionContent>
           </AccordionItem>
 
+          <AccordionItem value="videos">
+            <AccordionTrigger>
+              <span className='flex items-center gap-2'>
+                <Video className="w-4 h-4" /> Videos ({proposal.expand?.videos?.length || 0})
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className='grid grid-cols-1 gap-4'>
+              {proposal.expand?.videos?.map((video, index) => (
+                <div key={video.id} className="flex flex-col gap-2">
+                  <video 
+                    controls
+                    className="w-full rounded-md"
+                    src={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${video.id}/${video.attachment}`}
+                  >
+                    Tu navegador no soporta el elemento de video.
+                  </video>
+                  <span className="text-sm font-medium text-gray-500">
+                    Video {index + 1}
+                  </span>
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+
           <AccordionItem value="duracion">
             <AccordionTrigger>
               <span className='flex items-center gap-2'>
-                <Clock className="w-4 h-4" /> Duración y Alineadores
+                <Clock className="w-4 h-4" /> Plan, Duración y Alineadores
               </span>
             </AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-500">Plan de Tratamiento</span>
+                  <span className="text-lg">{
+                    proposal.treatment_plan === 'light_single' ? 'Light 1 Maxilar' :
+                    proposal.treatment_plan === 'light_double' ? 'Light 2 Maxilares' :
+                    proposal.treatment_plan === 'medium_single' ? 'Medio 1 Maxilar' :
+                    proposal.treatment_plan === 'medium_double' ? 'Medio 2 Maxilares' :
+                    proposal.treatment_plan === 'full_single' ? 'Full 1 Maxilar' :
+                    'Full 2 Maxilares'
+                  }</span>
+                </div>
+                <div className="flex flex-col">
                   <span className="text-sm font-medium text-gray-500">Duración Estimada</span>
                   <span className="text-lg">{proposal.duration}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-500">Cantidad de Alineadores</span>
-                  <span className="text-lg">{proposal.aligners_count}</span>
+                  <span className="text-sm font-medium text-gray-500">Maxilar Superior</span>
+                  <span className="text-lg">{proposal.upper_aligners_count} alineadores</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-500">Mandíbula</span>
+                  <span className="text-lg">{proposal.lower_aligners_count} alineadores</span>
                 </div>
               </div>
             </AccordionContent>

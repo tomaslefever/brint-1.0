@@ -21,7 +21,8 @@ export const uploadFile = async (file: File, orderId: string, type: string) => {
       'fotografiasPaciente': 'fotografiasPaciente',
       'fotografiasAdicionales': 'fotografiasAdicionales',
       'imagenesRadiologicas': 'imagenesRadiologicas',
-      'comparisons': 'comparisons'
+      'comparisons': 'comparisons',
+      'videos': 'videos'
     };
 
     const field = fieldMap[type];

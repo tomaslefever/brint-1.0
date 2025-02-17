@@ -9,6 +9,7 @@ export type User = {
     lastname: string;
     last_login: string;
     avatar: string;
-    role: "admin" | "manager" | "author" | "client" | "editor" | "user";
+    role: "admin" | "manager" | "author" | "client" | "editor" | "user" | "doctor";
+    category?: "Base" | "Bronce" | "Plata" | "Oro";
     company: Company[];
 }

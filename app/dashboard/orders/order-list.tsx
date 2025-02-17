@@ -50,6 +50,10 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
 
   const router = useRouter();
 
+  // Agregar estados para el ordenamiento
+  const [sortField, setSortField] = useState<'created' | 'updated'>('created')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
   useEffect(() => {
     let isMounted = true;
 
@@ -68,8 +72,14 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
         const finalFilter = [permissionFilter, searchFilter]
           .filter(Boolean)
           .join(' && ');
+        
+        // Modificar el sort para usar el estado
+        const sortString = sortField === 'created' 
+          ? `${sortDirection === 'desc' ? '-' : '+'}created`
+          : `${sortDirection === 'desc' ? '-' : '+'}updated`;
+
         const records = await pb.collection('orders').getFullList<Order>({
-          sort: '-created',
+          sort: sortString,
           filter: finalFilter,
           expand: 'customer,created_by,activity',
           requestKey: requestKey
@@ -101,7 +111,7 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
       isMounted = false
       pb.cancelAllRequests()
     }
-  }, [searchTerm, refreshTrigger, searchParams])
+  }, [searchTerm, refreshTrigger, searchParams, sortField, sortDirection])
 
   const handleDeleteOrder = async (id: string) => {
     try {
@@ -150,6 +160,17 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
     exit: { opacity: 0, height: 0 }
   };
 
+  const handleSort = (field: 'created' | 'updated') => {
+    if (sortField === field) {
+      // Si es el mismo campo, cambiar la dirección
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Si es un campo diferente, establecerlo como desc por defecto
+      setSortField(field)
+      setSortDirection('desc')
+    }
+  }
+
   return (
     <>
       {isLoading && <p>Cargando órdenes...</p>}
@@ -161,9 +182,23 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
                 {/* <TableHead>ID</TableHead> */}
                 <TableHead>Paciente</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Fecha creación</TableHead>
+                <TableHead 
+                  onClick={() => handleSort('created')}
+                  className="cursor-pointer hover:bg-slate-100"
+                >
+                  Fecha creación {sortField === 'created' && (
+                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </TableHead>
                 <TableHead>Creado por</TableHead>
-                <TableHead>Última actividad</TableHead>
+                <TableHead 
+                  onClick={() => handleSort('updated')}
+                  className="cursor-pointer hover:bg-slate-100"
+                >
+                  Última modificación {sortField === 'updated' && (
+                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </TableHead>
                 <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -197,29 +232,33 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
                   
                 <TableCell>
                   <Badge variant={
-                      order.status === 'pending' ? 'outline' :
-                      order.status === 'working' ? 'info' :
-                      order.status === 'complete' ? 'success' :
+                      order.status === 'pending' ? 'warning' :
+                      order.status === 'working' ? 'success' :
+                      order.status === 'complete' ? 'info' :
                       order.status === 'canceled' ? 'destructive' :
                       order.status === 'paused' ? 'warning' :
                       order.status === 'proposal_sent' ? 'success' :
+                      order.status === 'proposal_pending' ? 'warning' :
                       order.status === 'proposal_accepted' ? 'success' :
                       order.status === 'proposal_rejected' ? 'destructive' :
-                      order.status === 'order_approved' ? 'success' :
+                      order.status === 'order_approved' ? 'warning' :
+                      order.status === 'meeting_scheduled' ? 'warning' :
+                      order.status === 'shipping' ? 'info' :
                       'default'
                     }>
                         {
-                        order.status === 'pending' ? 'Pendiente' :
+                        order.status === 'pending' ? 'Pendiente aceptación archivos' :
                         order.status === 'canceled' ? 'Cancelado' :
                         order.status === 'paused' ? 'Pausado' :
+                        order.status === 'proposal_pending' ? 'En espera de propuesta de Innovaligners' :
                         order.status === 'proposal_sent' ? 'Propuesta enviada' :
-                        order.status === 'proposal_accepted' ? 'Propuesta aceptada' :
+                        order.status === 'proposal_accepted' ? 'Solicitud alineadores' :
                         order.status === 'proposal_rejected' ? 'Propuesta rechazada' :
-                        order.status === 'order_approved' ? 'Orden Aprobada' :
-                        order.status === 'working' ? 'Piezas en fabricación' :
-                        order.status === 'shipping' ? 'Piezas enviadas' :
+                        order.status === 'order_approved' ? 'Archivos aceptados' :
+                        order.status === 'working' ? 'Alineadores en producción' :
+                        order.status === 'shipping' ? 'Alineadores enviados' :
                         order.status === 'complete' ? 'Trabajo completado' :
-                        order.status === 'meeting_scheduled' ? 'Reunión programada' :
+                        order.status === 'meeting_scheduled' ? 'Reunión virtual agendada' :
                         'default'
                     }
                   </Badge>
@@ -227,8 +266,8 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
                 <TableCell>{format(new Date(order.created), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>{order.expand?.created_by?.name || 'N/A'}</TableCell>
                 <TableCell>
-                  {order.expand?.activity && order.expand.activity.length > 0
-                    ? timeAgo.format(new Date(order.expand.activity[order.expand.activity.length - 1].created))
+                  {order.updated 
+                    ? timeAgo.format(new Date(order.updated))
                     : 'N/A'}
                 </TableCell>
                 <TableCell>
