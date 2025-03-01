@@ -5,6 +5,7 @@ import { CalendarIcon, Upload, Info, ChevronRight, ChevronLeft, X, Plus, UploadC
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useDropzone } from 'react-dropzone';
+import JSZip from 'jszip';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -161,6 +162,17 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   })
 
   const [activity, setActivity] = useState('')
+
+  const [archivosModelo3D, setArchivosModelo3D] = useState<File[]>([]);
+  const [archivosRadiologicos, setArchivosRadiologicos] = useState<File[]>([]);
+
+  const handleDropModelo3D = (acceptedFiles: File[]) => {
+    setArchivosModelo3D(prev => [...prev, ...acceptedFiles]);
+  };
+
+  const handleDropRadiologicos = (acceptedFiles: File[]) => {
+    setArchivosRadiologicos(prev => [...prev, ...acceptedFiles]);
+  };
 
   const manejarCambioArchivo = useCallback((files: FileList | File[] | null, tipo: string) => {
     if (files) {
@@ -358,27 +370,21 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 <SelectItem value="digital">Digital (archivos STL)</SelectItem>
                 <SelectItem value="3shape">Enviar por comunícate 3Shape</SelectItem>
                 <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem>
-                {/* <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem> */}
               </SelectContent>
             </Select>
 
             {metodoEntregaModelo === 'digital' && (
               <div className="space-y-4">
                 <FileDropzone 
-                  files={archivos}
-                  onDrop={(acceptedFiles) => {
-                    if (acceptedFiles.length > 0) {
-                      setArchivos(prev => [...prev, ...acceptedFiles]);
-                    }
-                  }}
-                  onDelete={(index) => {
-                    setArchivos(prev => prev.filter((_, i) => i !== index));
-                  }}
+                  files={archivosModelo3D}
+                  onDrop={handleDropModelo3D}
+                  onDelete={(index) => setArchivosModelo3D(prev => prev.filter((_, i) => i !== index))}
                   acceptedFileTypes={{
                     'model/stl': ['.stl'],
                     'application/octet-stream': ['.stl']
                   }}
                   fileTypeDescription="STL"
+                  message={'Arrastra archivos Maxilar superior y Mandíbula en formato STL aquí'}
                 />
               </div>
             )}
@@ -515,12 +521,16 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                       </div>
                     </div>
                   ) : (
-                    <DropZone tipo="coneBeam" onFileChange={manejarCambioArchivo}>
-                      <div className="flex flex-col items-center">
-                        <Upload className="h-8 w-8 mb-2" />
-                        <p className="text-xs">Arrastra o haz clic</p>
-                      </div>
-                    </DropZone>
+                    <FileDropzone 
+                      files={archivosRadiologicos}
+                      onDrop={handleDropRadiologicos}
+                      onDelete={(index) => setArchivosRadiologicos(prev => prev.filter((_, i) => i !== index))}
+                      acceptedFileTypes={{
+                        '*': '*'
+                      }}
+                      fileTypeDescription="Cone Beam / DCM / Dicom"
+                      message={'Arrastra archivos Cone Beam o Dicom / DCM aquí'}
+                    />
                   )}
                 </div>
               </div>
@@ -538,6 +548,10 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   const eliminarArchivo = (index: number) => {
     setArchivos(prev => prev.filter((_, i) => i !== index))
   }
+
+  const handleDrop = (acceptedFiles: File[]) => {
+    setArchivos(prev => [...prev, ...acceptedFiles]);
+  };
 
   const handleCreateOrder = async () => {
     if (!selectedCustomerId || !selectedCompanyId) {
@@ -621,17 +635,29 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
         })
       }
 
-      // Subir múltiples archivos si existen
-      if (archivos.length > 0) {
-        const uploadedFileIds = await Promise.all(
-          archivos.map(async (archivo) => {
-            const uploadedFile = await uploadFile(archivo, createdOrder.id, 'model3d');
-            return uploadedFile.id;
-          })
-        );
-
+      // Comprimir archivos del modelo 3D antes de subir
+      if (archivosModelo3D.length > 0) {
+        const zipModelo3D = new JSZip();
+        archivosModelo3D.forEach(archivo => {
+          zipModelo3D.file(archivo.name, archivo);
+        });
+        const contentModelo3D = await zipModelo3D.generateAsync({ type: "blob" });
+        const uploadedFileModelo3D = await uploadFile(new File([contentModelo3D], "modelos3D.zip"), createdOrder.id, 'model3d');
         await pb.collection('orders').update(createdOrder.id, {
-          model3d: uploadedFileIds,
+          model3d: uploadedFileModelo3D.id,
+        });
+      }
+
+      // Comprimir archivos radiológicos antes de subir
+      if (archivosRadiologicos.length > 0) {
+        const zipRadiologicos = new JSZip();
+        archivosRadiologicos.forEach(archivo => {
+          zipRadiologicos.file(archivo.name, archivo);
+        });
+        const contentRadiologicos = await zipRadiologicos.generateAsync({ type: "blob" });
+        const uploadedFileRadiologicos = await uploadFile(new File([contentRadiologicos], "radiologicos.zip"), createdOrder.id, 'radiologicos');
+        await pb.collection('orders').update(createdOrder.id, {
+          radiologicos: uploadedFileRadiologicos.id,
         });
       }
 
@@ -701,22 +727,11 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     onDrop, 
     onDelete, 
     acceptedFileTypes,
-    fileTypeDescription
+    fileTypeDescription,
+    message
   }) => {
     const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
-      onDrop: (acceptedFiles, rejectedFiles) => {
-        if (rejectedFiles.length > 0) {
-          rejectedFiles.forEach(file => {
-            toast({
-              title: "Se ha rechazado el archivo " + file.file.name,
-              description: `Solo se permiten archivos ${fileTypeDescription}`,
-              variant: "destructive",
-            });
-          });
-        }
-        
-        onDrop(acceptedFiles);
-      },
+      onDrop,
       accept: acceptedFileTypes,
       multiple: true,
       useFsAccessApi: false
@@ -725,7 +740,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     return (
       <div className="space-y-4">
         <div className="border-2 border-dashed rounded-lg p-4">
-          {Array.isArray(files) && files.length > 0 ? (
+          {files.length > 0 ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 {files.map((file, index) => (
@@ -763,7 +778,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 <div className="flex flex-col items-center gap-2">
                   <Plus className="h-6 w-6 text-gray-400" />
                   <p className="text-sm text-gray-600">
-                    Agregar más archivos STL
+                    Agregar más archivos
                   </p>
                 </div>
               </div>
@@ -782,10 +797,10 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 ) : (
                   <>
                     <p className="text-sm font-medium text-gray-700">
-                      Arrastra archivos <strong>Maxilar superior</strong> y <strong>Mandíbula</strong> en formato STL aquí o
+                      {message}
                     </p>
                     <p className="text-xs uppercase text-gray-500 border p-2 rounded-md">
-                      haz clic para seleccionar
+                      o haz clic para seleccionar
                     </p>
                   </>
                 )}
@@ -828,7 +843,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           )}
         </div>
       </div>
-      <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-1">
+      <div className="space-y-4 overflow-y-auto px-1">
         <form>
           {paso === 1 ? renderPaso1() :
            paso === 2 ? renderPaso2() :

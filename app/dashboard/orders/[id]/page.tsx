@@ -45,13 +45,15 @@ async function fetchOrderTimeline(orderId: string): Promise<TimelineEvent[]> {
     // Obtener la orden
     const order = await pb.collection('orders').getOne(orderId, {
       expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas',
+      requestKey: null
     });
 
     // Obtener propuestas relacionadas con la orden
     const proposals = await pb.collection('proposals').getFullList({
       filter: `order = "${orderId}"`,
       expand: 'order,created_by,comparisons',
-      sort: '-created'
+      sort: '-created',
+      requestKey: null
     });
 
     const timeline: TimelineEvent[] = [

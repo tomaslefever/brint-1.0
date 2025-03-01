@@ -12,7 +12,7 @@ import PocketBase from 'pocketbase'
 import Image from 'next/image'
 import { Separator } from './ui/separator'
 import { Eye, EyeOff } from "lucide-react"
-const pb = new PocketBase('https://innovaligners.pockethost.io/')
+const pb = new PocketBase('https://pb.innovalignersapp.cl/')
 
 export default function LoginComponent() {
   const [email, setEmail] = useState('')

@@ -1,6 +1,6 @@
 import PocketBase from 'pocketbase';
 
-const pb = new PocketBase('https://innovaligners.pockethost.io/');
+const pb = new PocketBase('https://pb.innovalignersapp.cl/');
 
 type NotificationType = 'info' | 'warning' | 'error' | 'success' | 'comment';
 

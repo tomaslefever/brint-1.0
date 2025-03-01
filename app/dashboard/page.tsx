@@ -8,9 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar'
-import parse from 'date-fns/parse'
-import startOfWeek from 'date-fns/startOfWeek'
-import getDay from 'date-fns/getDay'
+import {parse} from 'date-fns/parse'
+import {startOfWeek} from 'date-fns/startOfWeek'
+import {getDay} from 'date-fns/getDay'
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { format, subDays, subHours } from 'date-fns'
 import pb from '@/app/actions/pocketbase'
@@ -62,7 +62,8 @@ export default function Dashboard() {
         if (currentUser?.role === 'admin' || currentUser?.role === 'manager') {
           // Usuarios activos en las últimas 24 horas
           const activeUsersResult = await pb.collection('users').getList(1, 1, {
-            filter: `last_login >= "${format(subHours(new Date(), 24), "yyyy-MM-dd HH:mm:ss")}"`,
+            // filter: `last_login >= "${format(subHours(new Date(), 24), "yyyy-MM-dd HH:mm:ss")}"`,
+            requestKey: null
           });
           setActiveUsers(activeUsersResult.totalItems);
         } else {
@@ -76,12 +77,14 @@ export default function Dashboard() {
 
         const pendingOrdersResult = await pb.collection('orders').getList(1, 1, {
           filter: userFilter,
+          requestKey: null
         });
         setPendingOrders(pendingOrdersResult.totalItems);
 
         // Pacientes ingresados en los últimos 7 días
         const recentCustomersResult = await pb.collection('customers').getList(1, 1, {
-          filter: `created >= "${format(subDays(new Date(), 7), "yyyy-MM-dd HH:mm:ss")}"`,
+          // filter: `created >= "${format(subDays(new Date(), 7), "yyyy-MM-dd HH:mm:ss")}"`,
+          requestKey: null
         });
         setRecentCustomers(recentCustomersResult.totalItems);
 
@@ -90,6 +93,7 @@ export default function Dashboard() {
           sort: '-created',
           filter: userFilter,
           expand: 'created_by',
+          requestKey: null
         });
         setPedidosRecientes(recentOrdersResult.items as any);
       } catch (error) {

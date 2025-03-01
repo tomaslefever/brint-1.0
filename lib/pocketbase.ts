@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase'
 
 // Inicializa PocketBase
-const pb = new PocketBase('https://innovaligners.pockethost.io/')
+const pb = new PocketBase('https://pb.innovalignersapp.cl/')
 
 // Exporta la instancia de PocketBase
 export { pb }

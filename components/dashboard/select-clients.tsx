@@ -35,7 +35,7 @@ export default function SelectClients({ onClientSelect, selectedClientId }: Sele
           ? '' 
           : `created_by = "${currentUser?.id}"`,
         requestKey: null,
-        $autoCancel: false
+        autoCancel: false
       });
       setClients(records);
     } catch (error) {

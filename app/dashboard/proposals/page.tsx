@@ -77,7 +77,10 @@ export default function ProposalsPage() {
                           Duración: {proposal.duration}
                         </span>
                         <span className="text-sm">
-                          Alineadores: {proposal.aligners_count}
+                          Alineadores Superior: {proposal.upper_aligners_count}
+                        </span>
+                        <span className="text-sm">
+                          Alineadores Inferior: {proposal.lower_aligners_count}
                         </span>
                         <span className="text-sm font-semibold">
                           Precio: ${proposal.price.toLocaleString()}

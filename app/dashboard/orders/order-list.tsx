@@ -82,7 +82,7 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
           sort: sortString,
           filter: finalFilter,
           expand: 'customer,created_by,activity',
-          requestKey: requestKey
+          requestKey: null
         });
         if (isMounted) {
           setOrders(records as Order[])
@@ -129,7 +129,7 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
         sort: '-created',
         filter: searchTerm ? `name ~ "${searchTerm}" || address ~ "${searchTerm}"` : '',
         expand: 'customer,created_by,activity.created',
-        requestKey: fetchRequestKey
+        requestKey: null
       });
       setOrders(records as Order[])
       setConfirmDeleteId(null)

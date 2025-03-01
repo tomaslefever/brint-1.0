@@ -63,7 +63,8 @@ export default function SelectCompanies({ onCompanySelect, selectedCompanyId }: 
     try {
       const newCompany = await pb.collection('companies').create({
         name: newCompanyName,
-        created_by: currentUser?.id
+        created_by: currentUser?.id,
+        requestKey: null
       });
       
       setCompanies(prev => [...prev, newCompany as unknown as Company]);

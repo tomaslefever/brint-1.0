@@ -23,7 +23,7 @@ import es from 'javascript-time-ago/locale/es'
 TimeAgo.addLocale(es)
 const timeAgo = new TimeAgo('es-ES')
 
-const pb = new PocketBase('https://innovaligners.pockethost.io/');
+const pb = new PocketBase('https://pb.innovalignersapp.cl/');
 
 const NotificationDropdown: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
