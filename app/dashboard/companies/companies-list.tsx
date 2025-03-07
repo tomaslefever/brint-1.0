@@ -57,7 +57,6 @@ export default function CompaniesList({ searchTerm, refreshTrigger, onRefreshTri
         const permissionFilter = userRole !== 'admin' ? `created_by = "${pb.authStore.model?.id}"` : '';
         console.log('permissionFilter', permissionFilter);
         const records = await pb.collection('companies').getFullList<Company>({
-          sort: 'created',
           expand: 'created_by',
           filter: permissionFilter,
           requestKey: null

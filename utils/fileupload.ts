@@ -24,13 +24,14 @@ export const uploadFile = async (file: File, orderId: string, type: string) => {
       'archivosRadiologicos': 'archivosRadiologicos',
       'comparisons': 'comparisons',
       'videos': 'videos',
-      
+      'coneBeam': 'imagenesRadiologicas'
     };
 
     const field = fieldMap[type];
-    if (!field) {
-      throw new Error('Tipo de archivo no válido');
-    }
+    console.log(field);
+    // if (!field) {
+    //   throw new Error('Tipo de archivo no válido');
+    // }
 
     const currentFiles = Array.isArray(updatedOrder[field]) ? updatedOrder[field] : [];
     

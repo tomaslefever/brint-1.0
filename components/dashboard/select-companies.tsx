@@ -26,7 +26,7 @@ export default function SelectCompanies({ onCompanySelect, selectedCompanyId }: 
       setError(null)
       try {
         const records = await pb.collection('companies').getFullList<Company>({
-          sort: 'created',
+          // sort: 'created',
           filter: currentUser?.role === 'admin' 
             ? '' 
             : `created_by = "${currentUser?.id}"`,

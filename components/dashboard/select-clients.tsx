@@ -30,7 +30,7 @@ export default function SelectClients({ onClientSelect, selectedClientId }: Sele
     setError(null)
     try {
       const records = await pb.collection('customers').getFullList<Customer>({
-        sort: 'created',
+        // sort: 'created',
         filter: currentUser?.role === 'admin' 
           ? '' 
           : `created_by = "${currentUser?.id}"`,

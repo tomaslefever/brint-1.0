@@ -42,9 +42,9 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
       try {
         const records = await pb.collection('users').getFullList({
           sort: '-created',
-          filter: searchTerm ? `username ~ "${searchTerm}" || email ~ "${searchTerm}"` : '',
+          filter: searchTerm ? `name ~ "${searchTerm}" || email ~ "${searchTerm}"` : '',
           expand: 'role',
-          fields: 'id,username,email,role',
+          fields: 'id,name,email,role',
         });
         if (isMounted) {
           setUsers(records);
@@ -125,7 +125,7 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
       <TableBody>
         {users.map((user) => (
           <TableRow key={user.id}>
-            <TableCell className="font-medium">{user.username}</TableCell>
+            <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.role}</TableCell>
             <TableCell>

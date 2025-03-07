@@ -439,7 +439,7 @@ export default function NewProposal({ orderId, onProposalCreated }: NewProposalP
             </div>
           </div>
           
-          <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-1">
+          <div className="space-y-4 px-1">
             {paso === 1 ? renderPaso1() : renderPaso2()}
           </div>
 

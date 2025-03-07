@@ -174,16 +174,33 @@ const updateStatus = async (status: string) => {
               <AccordionItem value="item-7">
                 <AccordionTrigger><span className='flex items-center gap-2'><FileImageIcon className="w-4 h-4" /> Imágenes radiológicas ({order.expand?.imagenesRadiologicas?.length ? order.expand?.imagenesRadiologicas?.length : 0})</span></AccordionTrigger>
                 <AccordionContent className='grid grid-cols-4 gap-2'>
-                  {order.expand?.imagenesRadiologicas?.map((value, index) => (
-                    <div key={value.id} className="flex flex-col gap-2">
-                      <img 
-                        src={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${value.id}/${value.attachment}`} alt={`Imagen radiológica ${value.type}`} 
-                        className="object-cover rounded-md aspect-square cursor-pointer"
-                        onClick={() => openLightbox(index, 'radiological')}
-                      />
-                      <span className="text-sm font-medium text-gray-500 overflow-hidden whitespace-nowrap">{value.attachment}</span>
-                    </div>
-                  ))}
+                  {order.expand?.imagenesRadiologicas?.map((value, index) => {
+                    const isZipFile = value.attachment.toLowerCase().endsWith('.zip');
+
+                    return isZipFile ? (
+                      <div key={value.id} className="flex flex-col gap-2">
+                        <Link 
+                          href={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${value.id}/${value.attachment}`}
+                          target="_blank"
+                          className="p-4 border rounded-md hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="text-sm font-medium">Descargar ZIP (Cone Beam)</span>
+                        </Link>
+                        <span className="text-sm font-medium text-gray-500 overflow-hidden whitespace-nowrap">{value.attachment}</span>
+                      </div>
+                    ) : (
+                      <div key={value.id} className="flex flex-col gap-2">
+                        <img 
+                          src={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${value.id}/${value.attachment}`}
+                          alt={`Imagen radiológica ${value.type}`} 
+                          className="object-cover rounded-md aspect-square cursor-pointer"
+                          onClick={() => openLightbox(index, 'radiological')}
+                        />
+                        <span className="text-sm font-medium text-gray-500 overflow-hidden whitespace-nowrap">{value.attachment}</span>
+                      </div>
+                    );
+                  })}
                 </AccordionContent>
               </AccordionItem>
 
@@ -195,20 +212,20 @@ const updateStatus = async (status: string) => {
               <Button className="gap-2 bg-red-700" onClick={() => updateStatus('order_rejected')}><X className="w-4"></X> Archivos con inconsistencias</Button>
             </CardFooter>
             )}
-            {order.status == 'meeting_scheduled' || order.status == 'meeting_completed' && pb.authStore.model?.role == 'admin' && (
+            {order.status == 'meeting_scheduled' && pb.authStore.model?.role == 'admin' && (
+              <CardFooter className="flex gap-2">
+                <Link href={`/dashboard/orders/${order.id}/new-proposal`}><Button>Crear plan de tratamiento</Button></Link>
+              </CardFooter>
+            )}
+            {order.status == 'meeting_completed' && pb.authStore.model?.role == 'admin' && (
               <CardFooter className="flex gap-2">
                 <Link href={`/dashboard/orders/${order.id}/new-proposal`}><Button>Crear plan de tratamiento</Button></Link>
               </CardFooter>
             )}
             {order.status == 'order_approved' && pb.authStore.model?.role == 'doctor' && (
               <CardFooter className="flex gap-2">
-                <Button className="gap-2" onClick={() => {
-                  updateStatus('meeting_scheduled');
-                  window.open('https://calendly.com/innovaligners', '_blank');
-                }}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
-                <Button className="gap-2" onClick={() => {
-                  updateStatus('meeting_completed')
-                  }}><Calendar className="w-4 h-4"></Calendar> Esperar propuesta de Innovaligners</Button>
+                <Button className="gap-2" onClick={() => {updateStatus('meeting_scheduled'); window.open('https://calendly.com/innovaligners', '_blank');}}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
+                <Button className="gap-2" onClick={() => {updateStatus('meeting_completed')}}><Calendar className="w-4 h-4"></Calendar> Esperar propuesta de Innovaligners</Button>
               </CardFooter>
             )}
             <Lightbox

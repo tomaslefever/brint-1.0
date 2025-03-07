@@ -84,6 +84,7 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
           expand: 'customer,created_by,activity',
           requestKey: null
         });
+        console.log(records);
         if (isMounted) {
           setOrders(records as Order[])
         }
@@ -132,6 +133,7 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
         requestKey: null
       });
       setOrders(records as Order[])
+      console.log(records)
       setConfirmDeleteId(null)
       setOpenDropdownId(null)
     } catch (error) {

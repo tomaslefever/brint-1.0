@@ -69,7 +69,6 @@ export default function CustomerList({ searchTerm, refreshTrigger, onRefreshTrig
           .join(' && ');
 
         const records = await pb.collection('customers').getFullList<Customer>({
-          sort: '-created',
           filter: finalFilter,
         });
         if (isMounted) {

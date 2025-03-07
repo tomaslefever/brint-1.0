@@ -9,7 +9,7 @@ const pb = new PocketBase('https://pb.innovalignersapp.cl/')
 const currentUser = pb.authStore.model ? pb.authStore.model : null;
 
 const Header: React.FC = () => {
-  console.log(pb.authStore);
+  console.log(currentUser);
 
   return (
     <header className="flex items-center justify-between py-4 px-8 ml-12 lg:ml-64">

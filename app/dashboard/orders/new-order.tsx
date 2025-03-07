@@ -47,6 +47,7 @@ import { createActivity } from '@/utils/newactivity'
 import { uploadFile } from '@/utils/fileupload'
 import DropZone from '@/app/utils/DropZone'
 import { toast } from '@/hooks/use-toast'
+import { FileDropzoneCompress, compressFiles } from '@/components/dashboard/file-dropzone-compress'
 
 interface NewOrderProps {
   customer_id?: string;
@@ -163,16 +164,8 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
 
   const [activity, setActivity] = useState('')
 
-  const [archivosModelo3D, setArchivosModelo3D] = useState<File[]>([]);
-  const [archivosRadiologicos, setArchivosRadiologicos] = useState<File[]>([]);
-
-  const handleDropModelo3D = (acceptedFiles: File[]) => {
-    setArchivosModelo3D(prev => [...prev, ...acceptedFiles]);
-  };
-
-  const handleDropRadiologicos = (acceptedFiles: File[]) => {
-    setArchivosRadiologicos(prev => [...prev, ...acceptedFiles]);
-  };
+  const [archivosModelo, setArchivosModelo] = useState<File[]>([])
+  const [archivosConeBeam, setArchivosConeBeam] = useState<File[]>([])
 
   const manejarCambioArchivo = useCallback((files: FileList | File[] | null, tipo: string) => {
     if (files) {
@@ -370,21 +363,22 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 <SelectItem value="digital">Digital (archivos STL)</SelectItem>
                 <SelectItem value="3shape">Enviar por comunícate 3Shape</SelectItem>
                 <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem>
+                {/* <SelectItem value="escaneo">Generar una orden de escaneo</SelectItem> */}
               </SelectContent>
             </Select>
 
             {metodoEntregaModelo === 'digital' && (
               <div className="space-y-4">
                 <FileDropzone 
-                  files={archivosModelo3D}
-                  onDrop={handleDropModelo3D}
-                  onDelete={(index) => setArchivosModelo3D(prev => prev.filter((_, i) => i !== index))}
+                  files={archivosModelo}
+                  onDrop={(files) => setArchivosModelo(prev => [...prev, ...files])}
+                  onDelete={(index) => setArchivosModelo(prev => prev.filter((_, i) => i !== index))}
                   acceptedFileTypes={{
                     'model/stl': ['.stl'],
                     'application/octet-stream': ['.stl']
                   }}
                   fileTypeDescription="STL"
-                  message={'Arrastra archivos Maxilar superior y Mandíbula en formato STL aquí'}
+                  compress={false}
                 />
               </div>
             )}
@@ -508,31 +502,19 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
             )}
 
             {tipoImagenRadiologica === 'coneBeam' && (
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="coneBeamArchivo">Archivos .dicom o .dcm</Label>
-                  {imagenesRadiologicas.coneBeam ? (
-                    <div className="aspect-square flex items-center justify-center bg-gray-100 rounded-lg p-4">
-                      <div className="text-center">
-                        <p className="text-sm font-medium truncate">{imagenesRadiologicas.coneBeam.file.name}</p>
-                        <Button variant="destructive" size="sm" onClick={() => eliminarImagen('coneBeam')} className="mt-2">
-                          Eliminar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <FileDropzone 
-                      files={archivosRadiologicos}
-                      onDrop={handleDropRadiologicos}
-                      onDelete={(index) => setArchivosRadiologicos(prev => prev.filter((_, i) => i !== index))}
-                      acceptedFileTypes={{
-                        '*': '*'
-                      }}
-                      fileTypeDescription="Cone Beam / DCM / Dicom"
-                      message={'Arrastra archivos Cone Beam o Dicom / DCM aquí'}
-                    />
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="coneBeamArchivo">Archivos .dicom o .dcm</Label>
+                <FileDropzoneCompress 
+                  files={archivosConeBeam}
+                  onDrop={(files) => setArchivosConeBeam(prev => [...prev, ...files])}
+                  onDelete={(index) => setArchivosConeBeam(prev => prev.filter((_, i) => i !== index))}
+                  acceptedFileTypes={{
+                    'application/dicom': ['.dicom', '.dcm'],
+                    'application/octet-stream': ['.dicom', '.dcm']
+                  }}
+                  fileTypeDescription="DICOM/DCM"
+                  message="Arrastra archivos DICOM/DCM aquí"
+                />
               </div>
             )}
           </div>
@@ -548,10 +530,6 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   const eliminarArchivo = (index: number) => {
     setArchivos(prev => prev.filter((_, i) => i !== index))
   }
-
-  const handleDrop = (acceptedFiles: File[]) => {
-    setArchivos(prev => [...prev, ...acceptedFiles]);
-  };
 
   const handleCreateOrder = async () => {
     if (!selectedCustomerId || !selectedCompanyId) {
@@ -635,29 +613,13 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
         })
       }
 
-      // Comprimir archivos del modelo 3D antes de subir
-      if (archivosModelo3D.length > 0) {
-        const zipModelo3D = new JSZip();
-        archivosModelo3D.forEach(archivo => {
-          zipModelo3D.file(archivo.name, archivo);
-        });
-        const contentModelo3D = await zipModelo3D.generateAsync({ type: "blob" });
-        const uploadedFileModelo3D = await uploadFile(new File([contentModelo3D], "modelos3D.zip"), createdOrder.id, 'model3d');
+      // Subir archivos STL sin comprimir
+      if (archivosModelo.length > 0) {
+        const uploadedFileIds = await Promise.all(
+          archivosModelo.map(archivo => uploadFile(archivo, createdOrder.id, 'model3d'))
+        );
         await pb.collection('orders').update(createdOrder.id, {
-          model3d: uploadedFileModelo3D.id,
-        });
-      }
-
-      // Comprimir archivos radiológicos antes de subir
-      if (archivosRadiologicos.length > 0) {
-        const zipRadiologicos = new JSZip();
-        archivosRadiologicos.forEach(archivo => {
-          zipRadiologicos.file(archivo.name, archivo);
-        });
-        const contentRadiologicos = await zipRadiologicos.generateAsync({ type: "blob" });
-        const uploadedFileRadiologicos = await uploadFile(new File([contentRadiologicos], "radiologicos.zip"), createdOrder.id, 'radiologicos');
-        await pb.collection('orders').update(createdOrder.id, {
-          radiologicos: uploadedFileRadiologicos.id,
+          model3d: uploadedFileIds.map(file => file.id),
         });
       }
 
@@ -698,6 +660,15 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
         }
       }
 
+      // Comprimir y subir archivos DICOM/DCM
+      if (archivosConeBeam.length > 0) {
+        const compressedFile = await compressFiles(archivosConeBeam);
+        const uploadedFile = await uploadFile(compressedFile, createdOrder.id, 'coneBeam');
+        await pb.collection('orders').update(createdOrder.id, {
+          coneBeam: uploadedFile.id,
+        });
+      }
+
       const notification = await createNotification({
         userId: '',
         message: 'El usuario ' + pb.authStore.model?.name + ' ha creado una nueva orden',
@@ -723,15 +694,26 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
   }
 
   const FileDropzone = ({ 
-    files, 
-    onDrop, 
-    onDelete, 
+    files,  // Archivos específicos para esta instancia
+    onDrop, // Función específica para esta instancia
+    onDelete, // Función específica para esta instancia
     acceptedFileTypes,
     fileTypeDescription,
-    message
+    compress = false
   }) => {
     const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
-      onDrop,
+      onDrop: (acceptedFiles, rejectedFiles) => {
+        if (rejectedFiles.length > 0) {
+          rejectedFiles.forEach(file => {
+            toast({
+              title: "Se ha rechazado el archivo " + file.file.name,
+              description: `Solo se permiten archivos ${fileTypeDescription}`,
+              variant: "destructive",
+            });
+          });
+        }
+        onDrop(acceptedFiles);
+      },
       accept: acceptedFileTypes,
       multiple: true,
       useFsAccessApi: false
@@ -740,7 +722,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     return (
       <div className="space-y-4">
         <div className="border-2 border-dashed rounded-lg p-4">
-          {files.length > 0 ? (
+          {Array.isArray(files) && files.length > 0 ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 {files.map((file, index) => (
@@ -778,7 +760,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 <div className="flex flex-col items-center gap-2">
                   <Plus className="h-6 w-6 text-gray-400" />
                   <p className="text-sm text-gray-600">
-                    Agregar más archivos
+                    Agregar más archivos STL
                   </p>
                 </div>
               </div>
@@ -797,10 +779,10 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                 ) : (
                   <>
                     <p className="text-sm font-medium text-gray-700">
-                      {message}
+                      Arrastra archivos <strong>Maxilar superior</strong> y <strong>Mandíbula</strong> en formato STL aquí o
                     </p>
                     <p className="text-xs uppercase text-gray-500 border p-2 rounded-md">
-                      o haz clic para seleccionar
+                      haz clic para seleccionar
                     </p>
                   </>
                 )}

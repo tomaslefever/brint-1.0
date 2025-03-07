@@ -52,7 +52,7 @@ async function fetchOrderTimeline(orderId: string): Promise<TimelineEvent[]> {
     const proposals = await pb.collection('proposals').getFullList({
       filter: `order = "${orderId}"`,
       expand: 'order,created_by,comparisons',
-      sort: '-created',
+      // sort: 'created',
       requestKey: null
     });
 
