@@ -48,7 +48,6 @@ import { uploadFile } from '@/utils/fileupload'
 import DropZone from '@/app/utils/DropZone'
 import { toast } from '@/hooks/use-toast'
 import { FileDropzoneCompress, compressFiles } from '@/components/dashboard/file-dropzone-compress'
-import { checkPocketBaseConnection } from '@/utils/checkConnection'
 
 interface NewOrderProps {
   customer_id?: string;
@@ -568,12 +567,7 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     setError(null)
 
     try {
-      // Verificar la conexión con el servidor antes de continuar
-      const isConnected = await checkPocketBaseConnection();
-      if (!isConnected) {
-        throw new Error('No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.');
-      }
-
+      // Verificar que la sesión sea válida
       if (!pb.authStore.isValid) {
         throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
       }

@@ -123,7 +123,7 @@
         "presentable": false,
         "unique": false,
         "options": {
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
@@ -138,7 +138,7 @@
         "presentable": false,
         "unique": false,
         "options": {
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
@@ -182,7 +182,7 @@
         "unique": false,
         "options": {
           "maxSelect": 1,
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
@@ -197,7 +197,7 @@
         "presentable": false,
         "unique": false,
         "options": {
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
@@ -213,7 +213,7 @@
         "unique": false,
         "options": {
           "maxSelect": 99,
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
@@ -228,7 +228,7 @@
         "presentable": false,
         "unique": false,
         "options": {
-          "maxSize": 5242880,
+          "maxSize": 1073741824,
           "mimeTypes": [],
           "thumbs": [],
           "protected": false
