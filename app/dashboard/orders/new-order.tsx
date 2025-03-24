@@ -48,6 +48,7 @@ import { uploadFile } from '@/utils/fileupload'
 import DropZone from '@/app/utils/DropZone'
 import { toast } from '@/hooks/use-toast'
 import { FileDropzoneCompress, compressFiles } from '@/components/dashboard/file-dropzone-compress'
+import { checkPocketBaseConnection } from '@/utils/checkConnection'
 
 interface NewOrderProps {
   customer_id?: string;
@@ -509,11 +510,11 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
                   onDrop={(files) => setArchivosConeBeam(prev => [...prev, ...files])}
                   onDelete={(index) => setArchivosConeBeam(prev => prev.filter((_, i) => i !== index))}
                   acceptedFileTypes={{
-                    'application/dicom': ['.dicom', '.dcm'],
-                    'application/octet-stream': ['.dicom', '.dcm']
+                    'application/dicom': ['.dicom, .dcm, .1, .2, .3, .4, .5, .6, .7, .8, .9, .10, .jpg, .html, .index, .js'],
+                    'application/octet-stream': ['.*']
                   }}
-                  fileTypeDescription="DICOM/DCM"
-                  message="Arrastra archivos DICOM/DCM aquí"
+                  fileTypeDescription="coneBeam"
+                  message="Arrastra tus archivos o carpeta DICOM/DCM aquí"
                 />
               </div>
             )}
@@ -567,6 +568,16 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
     setError(null)
 
     try {
+      // Verificar la conexión con el servidor antes de continuar
+      const isConnected = await checkPocketBaseConnection();
+      if (!isConnected) {
+        throw new Error('No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.');
+      }
+
+      if (!pb.authStore.isValid) {
+        throw new Error('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
+      }
+
       console.log('Fotografías del paciente:', fotografias)
       console.log('Fotografías adicionales:', fotografiasAdicionales)
       console.log('Imágenes radiológicas:', imagenesRadiologicas)
@@ -589,85 +600,194 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
         status: 'pending',
       }
 
-      const createdOrder = await pb.collection('orders').create(orderData)
+      // Crear la orden
+      let createdOrder;
+      try {
+        createdOrder = await pb.collection('orders').create(orderData);
+      } catch (error) {
+        console.error('Error al crear la orden:', error);
+        throw new Error('No se pudo crear la orden. Verifica tu conexión e intenta nuevamente.');
+      }
 
       // Actualizar el campo 'orders' del paciente
-      const customer = await pb.collection('customers').getOne(selectedCustomerId)
-      const existingOrders = customer.orders?.length > 0 ? customer.orders : []
-      await pb.collection('customers').update(selectedCustomerId, {
-        orders: [...existingOrders, createdOrder.id]
-      })
+      try {
+        const customer = await pb.collection('customers').getOne(selectedCustomerId)
+        const existingOrders = customer.orders?.length > 0 ? customer.orders : []
+        await pb.collection('customers').update(selectedCustomerId, {
+          orders: [...existingOrders, createdOrder.id]
+        })
+      } catch (error) {
+        console.error('Error al actualizar el cliente:', error);
+        // Continuar con el proceso aunque falle esta parte
+      }
 
       // Crear comentario inicial
-      if (activity) {
-        const newActivity = await createActivity(createdOrder.id, activity);
-
-        await pb.collection('orders').update(createdOrder.id, {
-          activity: newActivity.id
-        })
-      } else {
-        const newActivity = await createActivity(createdOrder.id, 'Pedido creado');
-
-        await pb.collection('orders').update(createdOrder.id, {
-          activity: newActivity.id
-        })
-      }
-
-      // Subir archivos STL sin comprimir
-      if (archivosModelo.length > 0) {
-        const uploadedFileIds = await Promise.all(
-          archivosModelo.map(archivo => uploadFile(archivo, createdOrder.id, 'model3d'))
-        );
-        await pb.collection('orders').update(createdOrder.id, {
-          model3d: uploadedFileIds.map(file => file.id),
-        });
-      }
-
-      // Subir fotografías
-      for (const [key, imagen] of Object.entries(fotografias)) {
-        if (imagen) {
-          console.log(`Subiendo fotografía ${key}:`, imagen.file)
-          const uploadedFile = await uploadFile(imagen.file, createdOrder.id, 'fotografiasPaciente');
-          console.log(`Archivo subido para ${key}:`, uploadedFile)
+      try {
+        if (activity) {
+          const newActivity = await createActivity(createdOrder.id, activity);
           await pb.collection('orders').update(createdOrder.id, {
-            [`fotografiasPaciente.${key}`]: uploadedFile.id,
+            activity: newActivity.id
+          })
+        } else {
+          const newActivity = await createActivity(createdOrder.id, 'Pedido creado');
+          await pb.collection('orders').update(createdOrder.id, {
+            activity: newActivity.id
           })
         }
+      } catch (error) {
+        console.error('Error al crear el comentario inicial:', error);
+        // Continuar con el proceso aunque falle esta parte
       }
 
-      // Subir fotografías adicionales
-      for (let i = 0; i < fotografiasAdicionales.length; i++) {
-        const foto = fotografiasAdicionales[i]
-        if (foto) {
-          console.log(`Subiendo fotografía adicional ${i}:`, foto.file)
-          const uploadedFile = await uploadFile(foto.file, createdOrder.id, 'fotografiasAdicionales');
-          console.log(`Archivo adicional subido ${i}:`, uploadedFile)
-          await pb.collection('orders').update(createdOrder.id, {
-            [`fotografiasAdicionales.${i}`]: uploadedFile.id,
-          })
+      // Función auxiliar para manejar errores de carga de archivos
+      const uploadWithRetry = async (file, orderId, type, maxRetries = 2) => {
+        console.log(`[Upload] Iniciando carga de "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB) - Tipo: ${type}`);
+        let attempts = 0;
+        while (attempts < maxRetries) {
+          try {
+            const startTime = performance.now();
+            const result = await uploadFile(file, orderId, type);
+            const endTime = performance.now();
+            const timeElapsed = ((endTime - startTime) / 1000).toFixed(2);
+            console.log(`[Upload] Completada la carga de "${file.name}" en ${timeElapsed} segundos`);
+            return result;
+          } catch (error) {
+            attempts++;
+            console.error(`[Upload] Intento ${attempts}/${maxRetries} fallido para "${file.name}":`, error.message);
+            if (attempts >= maxRetries) {
+              console.error(`[Upload] Fallaron todos los intentos para "${file.name}". Error final:`, error);
+              throw error;
+            }
+            // Esperar antes de reintentar
+            const waitTime = 1000 * attempts; // Aumentar tiempo de espera con cada intento
+            console.log(`[Upload] Esperando ${waitTime/1000} segundos antes de reintentar...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
         }
-      }
+      };
 
-      // Subir imágenes radiológicas
-      for (const [key, imagen] of Object.entries(imagenesRadiologicas)) {
-        if (imagen) {
-          console.log(`Subiendo imagen radiológica ${key}:`, imagen.file)
-          const uploadedFile = await uploadFile(imagen.file, createdOrder.id, 'imagenesRadiologicas');
-          console.log(`Archivo radiológico subido para ${key}:`, uploadedFile)
-          await pb.collection('orders').update(createdOrder.id, {
-            [`imagenesRadiologicas.${key}`]: uploadedFile.id,
-          })
+      try {
+        console.log(`[Upload] === INICIANDO CARGA DE MODELOS 3D (${archivosModelo.length} archivos) ===`);
+        // Subir archivos STL sin comprimir
+        if (archivosModelo.length > 0) {
+          for (let i = 0; i < archivosModelo.length; i++) {
+            const archivo = archivosModelo[i];
+            try {
+              console.log(`[Upload] Procesando modelo 3D ${i+1}/${archivosModelo.length}: ${archivo.name}`);
+              const uploadedFile = await uploadWithRetry(archivo, createdOrder.id, 'model3d');
+              console.log(`[Upload] Modelo 3D subido correctamente: ${archivo.name} (ID: ${uploadedFile.id})`);
+            } catch (error) {
+              console.error(`[Upload] ERROR al subir modelo 3D: ${archivo.name}`, error);
+              // Continuar con los siguientes archivos
+            }
+          }
         }
+        console.log(`[Upload] === FINALIZADA CARGA DE MODELOS 3D ===`);
+      } catch (error) {
+        console.error('[Upload] Error general al subir modelos 3D:', error);
       }
 
-      // Comprimir y subir archivos DICOM/DCM
-      if (archivosConeBeam.length > 0) {
-        const compressedFile = await compressFiles(archivosConeBeam);
-        const uploadedFile = await uploadFile(compressedFile, createdOrder.id, 'coneBeam');
-        await pb.collection('orders').update(createdOrder.id, {
-          coneBeam: uploadedFile.id,
-        });
+      try {
+        console.log(`[Upload] === INICIANDO CARGA DE FOTOGRAFÍAS DEL PACIENTE ===`);
+        // Subir fotografías
+        const totalFotos = Object.values(fotografias).filter(img => img !== null).length;
+        let fotoActual = 0;
+        
+        for (const [key, imagen] of Object.entries(fotografias)) {
+          if (imagen) {
+            fotoActual++;
+            try {
+              console.log(`[Upload] Procesando fotografía ${fotoActual}/${totalFotos}: ${key} - ${imagen.file.name}`);
+              const uploadedFile = await uploadWithRetry(imagen.file, createdOrder.id, 'fotografiasPaciente');
+              console.log(`[Upload] Fotografía subida correctamente: ${key} (ID: ${uploadedFile.id})`);
+              await pb.collection('orders').update(createdOrder.id, {
+                [`fotografiasPaciente.${key}`]: uploadedFile.id,
+              });
+            } catch (error) {
+              console.error(`[Upload] ERROR al subir fotografía ${key}:`, error);
+              // Continuar con las siguientes fotografías
+            }
+          }
+        }
+        console.log(`[Upload] === FINALIZADA CARGA DE FOTOGRAFÍAS DEL PACIENTE ===`);
+      } catch (error) {
+        console.error('[Upload] Error general al subir fotografías:', error);
       }
+
+      try {
+        console.log(`[Upload] === INICIANDO CARGA DE FOTOGRAFÍAS ADICIONALES (${fotografiasAdicionales.filter(img => img !== null).length} fotos) ===`);
+        // Subir fotografías adicionales
+        for (let i = 0; i < fotografiasAdicionales.length; i++) {
+          const foto = fotografiasAdicionales[i]
+          if (foto) {
+            console.log(`[Upload] Procesando fotografía adicional ${i+1}/${fotografiasAdicionales.length}: ${foto.file.name}`);
+            try {
+              const uploadedFile = await uploadWithRetry(foto.file, createdOrder.id, 'fotografiasAdicionales');
+              console.log(`[Upload] Fotografía adicional subida correctamente: ${i+1} (ID: ${uploadedFile.id})`);
+              await pb.collection('orders').update(createdOrder.id, {
+                [`fotografiasAdicionales.${i}`]: uploadedFile.id,
+              });
+            } catch (error) {
+              console.error(`[Upload] ERROR al subir fotografía adicional ${i+1}:`, error);
+              // Continuar con las siguientes fotografías
+            }
+          }
+        }
+        console.log(`[Upload] === FINALIZADA CARGA DE FOTOGRAFÍAS ADICIONALES ===`);
+      } catch (error) {
+        console.error('[Upload] Error general al subir fotografías adicionales:', error);
+      }
+
+      try {
+        console.log(`[Upload] === INICIANDO CARGA DE IMÁGENES RADIOLÓGICAS ===`);
+        // Subir imágenes radiológicas
+        const totalRadiologicas = Object.values(imagenesRadiologicas).filter(img => img !== null).length;
+        let radioActual = 0;
+        
+        for (const [key, imagen] of Object.entries(imagenesRadiologicas)) {
+          if (imagen) {
+            radioActual++;
+            try {
+              console.log(`[Upload] Procesando imagen radiológica ${radioActual}/${totalRadiologicas}: ${key} - ${imagen.file.name}`);
+              const uploadedFile = await uploadWithRetry(imagen.file, createdOrder.id, 'imagenesRadiologicas');
+              console.log(`[Upload] Imagen radiológica subida correctamente: ${key} (ID: ${uploadedFile.id})`);
+              await pb.collection('orders').update(createdOrder.id, {
+                [`imagenesRadiologicas.${key}`]: uploadedFile.id,
+              });
+            } catch (error) {
+              console.error(`[Upload] ERROR al subir imagen radiológica ${key}:`, error);
+              // Continuar con las siguientes imágenes
+            }
+          }
+        }
+        console.log(`[Upload] === FINALIZADA CARGA DE IMÁGENES RADIOLÓGICAS ===`);
+      } catch (error) {
+        console.error('[Upload] Error general al subir imágenes radiológicas:', error);
+      }
+
+      try {
+        // Comprimir y subir archivos DICOM/DCM
+        if (archivosConeBeam.length > 0) {
+          console.log(`[Upload] === INICIANDO CARGA DE CONE BEAM (${archivosConeBeam.length} archivos) ===`);
+          console.log(`[Upload] Comprimiendo ${archivosConeBeam.length} archivos DICOM...`);
+          const compressedFile = await compressFiles(archivosConeBeam);
+          console.log(`[Upload] Compresión completada. Tamaño del archivo resultante: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+          try {
+            const uploadedFile = await uploadWithRetry(compressedFile, createdOrder.id, 'coneBeam');
+            console.log(`[Upload] Archivo CONE BEAM subido correctamente (ID: ${uploadedFile.id})`);
+            await pb.collection('orders').update(createdOrder.id, {
+              coneBeam: uploadedFile.id,
+            });
+          } catch (error) {
+            console.error(`[Upload] ERROR al subir archivo CONE BEAM:`, error);
+          }
+          console.log(`[Upload] === FINALIZADA CARGA DE CONE BEAM ===`);
+        }
+      } catch (error) {
+        console.error('[Upload] Error general al subir archivos CONE BEAM:', error);
+      }
+
+      console.log(`[Upload] === PROCESO DE CARGA FINALIZADO ===`);
 
       const notification = await createNotification({
         userId: '',

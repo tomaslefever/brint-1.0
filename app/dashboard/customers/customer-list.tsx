@@ -22,7 +22,7 @@ import { EditCustomer } from './edit-customer'
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation'
 
-const pb = new PocketBase('https://pb.innovalignersapp.cl/')
+const pb = new PocketBase(process.env.NEXT_PUB)
 
 interface CustomerListProps {
   searchTerm: string;

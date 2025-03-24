@@ -4,7 +4,7 @@ import React from 'react';
 import NotificationDropdown from './NotificationDropdown';
 import PocketBase from 'pocketbase'
 
-const pb = new PocketBase('https://pb.innovalignersapp.cl/')
+const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
 
 const currentUser = pb.authStore.model ? pb.authStore.model : null;
 

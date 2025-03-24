@@ -6,7 +6,7 @@ import { Bell, Home, Package, Users, Settings, FileText, Sun, Moon, LogOut, Cont
 import Image from 'next/image';
 
 import PocketBase from 'pocketbase'
-const pb = new PocketBase('https://pb.innovalignersapp.cl/')
+const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
 
 const Sidebar: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);

@@ -55,31 +55,47 @@ export function FileDropzoneCompress({
         {files.length > 0 ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              {files.map((file, index) => (
-                <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+              {files.length > 6 ? (
+                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-white rounded-md">
                       <UploadCloud className="h-6 w-6 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{file.name}</p>
+                      <p className="text-sm font-medium">{files.length} archivos seleccionados</p>
                       <p className="text-xs text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                        {(files.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB en total
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDelete(index);
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
                 </div>
-              ))}
+              ) : (
+                files.map((file, index) => (
+                  <div key={`${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-white rounded-md">
+                        <UploadCloud className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete(index);
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
             <div
               {...getRootProps()}

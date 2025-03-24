@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase'
 
 // Inicializa PocketBase
-const pb = new PocketBase('https://pb.innovalignersapp.cl/')
+const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
 
 // Exporta la instancia de PocketBase
 export { pb }

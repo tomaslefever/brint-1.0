@@ -9,7 +9,7 @@ import PocketBase from 'pocketbase'
 import Link from 'next/link'
 import { Label } from '@/components/ui/label'
 
-const pb = new PocketBase('https://pb.innovalignersapp.cl/')
+const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
 
 interface EditCustomerProps {
   customer: Customer

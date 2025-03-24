@@ -12,6 +12,7 @@ export const uploadFile = async (file: File, orderId: string, type: string) => {
     const newFile = await pb.collection('files').create(formData, {
       $cancelKey: `upload_${orderId}_${Date.now()}`,
       requestKey: `upload_${orderId}_${Date.now()}`,
+      timeout: 0
     });
     
     const updatedOrder = await pb.collection('orders').getOne(orderId);
@@ -24,14 +25,14 @@ export const uploadFile = async (file: File, orderId: string, type: string) => {
       'archivosRadiologicos': 'archivosRadiologicos',
       'comparisons': 'comparisons',
       'videos': 'videos',
-      'coneBeam': 'imagenesRadiologicas'
+      'coneBeam': 'coneBeam'
     };
 
     const field = fieldMap[type];
     console.log(field);
-    // if (!field) {
-    //   throw new Error('Tipo de archivo no válido');
-    // }
+    if (!field) {
+      throw new Error('Tipo de archivo no válido');
+    }
 
     const currentFiles = Array.isArray(updatedOrder[field]) ? updatedOrder[field] : [];
     
