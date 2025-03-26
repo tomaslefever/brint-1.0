@@ -182,9 +182,9 @@ export function CreateUser({ onUserAdded }: CreateUserProps) {
                     Crear Usuario
                 </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="h-full overflow-y-auto">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} >
                         <SheetHeader>
                             <SheetTitle>Crear Nuevo Usuario</SheetTitle>
                             <SheetDescription>
