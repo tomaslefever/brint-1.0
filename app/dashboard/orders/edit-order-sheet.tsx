@@ -82,7 +82,7 @@ export function EditOrderSheet({ orderId, isOpen, onClose, onOrderUpdated }: Edi
         : '';
 
       const record = await pb.collection('orders').getOne(id, {
-        expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas',
+        expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas,coneBeam',
         filter: permissionFilter
       })
       setOrder(record as unknown as Order)

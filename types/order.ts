@@ -15,6 +15,7 @@ export type Order = {
     fotografiasPaciente: File[];
     fotografiasAdicionales: File[];
     imagenesRadiologicas: File[];
+    coneBeam: File[];
   };
   updated: string;
   nombre: string;
@@ -56,6 +57,7 @@ export type Order = {
   fotografiasPaciente: File[];
   fotografiasAdicionales: File[];
   imagenesRadiologicas: File[];
+  coneBeam: File[];
   proposal: Proposal;
   tipoImagenRadiologica: string;
 };

@@ -13,6 +13,7 @@ interface FileDropzoneCompressProps {
   message?: string;
 }
 
+// Mantener esta función por compatibilidad aunque ya no se use
 export async function compressFiles(files: File[]): Promise<File> {
   const zip = new JSZip();
   files.forEach(file => {
@@ -108,9 +109,6 @@ export function FileDropzoneCompress({
                 <p className="text-sm text-gray-600">
                   Agregar más archivos
                 </p>
-                <p className="text-xs text-gray-500">
-                  Los archivos serán comprimidos al enviar
-                </p>
               </div>
             </div>
           </div>
@@ -132,9 +130,6 @@ export function FileDropzoneCompress({
                   </p>
                   <p className="text-xs uppercase text-gray-500 border p-2 rounded-md">
                     o haz clic para seleccionar
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Los archivos serán comprimidos al enviar
                   </p>
                 </>
               )}

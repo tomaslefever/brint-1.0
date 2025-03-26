@@ -98,6 +98,7 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
         setIsOpen(open)
     }
 
+        
     const placeholders = {
         name: "Nombre",
         address: "Dirección",
@@ -161,17 +162,10 @@ const AddCompany = function AddCompany({ onCustomerAdded }: AddCompanyProps) {
                                 )
                                 case 'comuna': 
                                 return (
-                                    <Select
-                                        {...field}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={placeholders.comuna} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Santiago">Santiago</SelectItem>
-                                            <SelectItem value="Valparaíso">Valparaíso</SelectItem>
-                                        </SelectContent>
-                                    </Select>   
+                                    <Input 
+                                        placeholder={placeholders.comuna} 
+                                        {...field} 
+                                    /> 
                                 )
                             default:
                                 return (

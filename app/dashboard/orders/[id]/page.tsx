@@ -29,7 +29,7 @@ interface TimelineEvent {
 async function fetchOrderDetails(id: string): Promise<Order | null> {
   try {
     const record = await pb.collection('orders').getOne(id, {
-      expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas',
+      expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas,coneBeam',
       requestKey: null
     });
 
@@ -44,7 +44,7 @@ async function fetchOrderTimeline(orderId: string): Promise<TimelineEvent[]> {
   try {
     // Obtener la orden
     const order = await pb.collection('orders').getOne(orderId, {
-      expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas',
+      expand: 'customer,created_by,activity.author,model3d,fotografiasPaciente,fotografiasAdicionales,imagenesRadiologicas,coneBeam',
       requestKey: null
     });
 

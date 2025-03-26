@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { FileText, UserSquare, UserCircle, PercentCircle, CalendarClock, Check, X, Calendar } from "lucide-react"
+import { FileText, UserSquare, UserCircle, PercentCircle, CalendarClock, Check, X, Calendar, Loader2 } from "lucide-react"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { FileCheck2, Package, FileImageIcon } from "lucide-react"
 import Link from "next/link"
@@ -41,6 +41,12 @@ export function OrderCard({ order }: OrderCardProps) {
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [activeGallery, setActiveGallery] = useState<'patient' | 'radiological'>('patient');
 
+    const [compressionStatus, setCompressionStatus] = useState<{
+      status: 'idle' | 'compressing' | 'completed' | 'error';
+      progress: number;
+      error?: string;
+    }>({ status: 'idle', progress: 0 });
+
     console.log(order);
 
     const openLightbox = (index: number, type: 'patient' | 'radiological') => {
@@ -76,6 +82,75 @@ const updateStatus = async (status: string) => {
     order!.status = status;
     // router.reload();
 }
+
+const handleCompressAndDownload = async () => {
+  try {
+    setCompressionStatus({ status: 'compressing', progress: 0 });
+    
+    // Iniciar el proceso de compresión
+    const response = await fetch(`/api/orders/${order.id}/conebeam`);
+    
+    // Verificar si la respuesta es JSON (jobId) o un archivo ZIP
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType?.includes('application/json')) {
+      const { jobId } = await response.json();
+
+      // Verificar el estado cada segundo
+      const checkStatus = async () => {
+        const statusResponse = await fetch(`/api/orders/${order.id}/conebeam`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        });
+        
+        const status = await statusResponse.json();
+        
+        if (status.status === 'completed') {
+          setCompressionStatus({ status: 'completed', progress: 100 });
+          // Descargar el archivo
+          window.location.href = `/api/orders/${order.id}/conebeam`;
+          return;
+        } else if (status.status === 'error') {
+          setCompressionStatus({ 
+            status: 'error', 
+            progress: 0, 
+            error: status.error 
+          });
+          return;
+        } else {
+          setCompressionStatus({ 
+            status: 'compressing', 
+            progress: status.progress 
+          });
+          setTimeout(checkStatus, 1000);
+        }
+      };
+
+      checkStatus();
+    } else if (contentType?.includes('application/zip')) {
+      // Si es un archivo ZIP, descargarlo directamente
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${order.id}-conebeam.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      setCompressionStatus({ status: 'completed', progress: 100 });
+      setTimeout(() => setCompressionStatus({ status: 'idle', progress: 0 }), 2000);
+    }
+  } catch (error) {
+    console.error(error);
+    setCompressionStatus({ 
+      status: 'error', 
+      progress: 0, 
+      error: 'Error al iniciar la compresión' 
+    });
+  }
+};
 
   return (
       <Card>
@@ -171,6 +246,7 @@ const updateStatus = async (status: string) => {
                 </AccordionContent>
               </AccordionItem>
 
+              {order.expand?.imagenesRadiologicas?.length && (
               <AccordionItem value="item-7">
                 <AccordionTrigger><span className='flex items-center gap-2'><FileImageIcon className="w-4 h-4" /> Imágenes radiológicas ({order.expand?.imagenesRadiologicas?.length ? order.expand?.imagenesRadiologicas?.length : 0})</span></AccordionTrigger>
                 <AccordionContent className='grid grid-cols-4 gap-2'>
@@ -203,6 +279,51 @@ const updateStatus = async (status: string) => {
                   })}
                 </AccordionContent>
               </AccordionItem>
+                )}
+
+
+              {order.expand?.coneBeam?.length && (
+              <AccordionItem value="item-7">
+                <AccordionTrigger><span className='flex items-center gap-2'><FileImageIcon className="w-4 h-4" /> Cone Beam ({order.expand?.coneBeam?.length} archivos)</span></AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-5 w-5 text-gray-500" />
+                        <span className="text-sm font-medium">{order.expand?.coneBeam?.length} archivos disponibles</span>
+                      </div>
+                      <Button 
+                        onClick={handleCompressAndDownload}
+                        disabled={compressionStatus.status === 'compressing'}
+                        className="flex items-center gap-2"
+                      >
+                        {compressionStatus.status === 'compressing' ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm font-medium">Descargando ({compressionStatus.progress}%)</span>
+                          </>
+                        ) : compressionStatus.status === 'error' ? (
+                          <>
+                            <X className="h-4 w-4" />
+                            <span className="text-sm font-medium">Error</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4" />
+                            <span className="text-sm font-medium">Descargar todos</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {compressionStatus.error && (
+                      <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+                        {compressionStatus.error}
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              )}
 
             </Accordion>
             </CardContent>
