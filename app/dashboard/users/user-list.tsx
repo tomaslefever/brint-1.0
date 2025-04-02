@@ -16,6 +16,8 @@ import { RecordModel } from 'pocketbase'
 import { useToast } from "@/hooks/use-toast"
 import pb from '@/app/actions/pocketbase'
 import { motion, AnimatePresence } from 'framer-motion'
+import { UpdateUser } from './update-user'
+import { useRouter } from 'next/navigation'
 
 interface UserListProps {
   searchTerm: string;
@@ -30,6 +32,7 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -44,7 +47,8 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
           sort: '-created',
           filter: searchTerm ? `name ~ "${searchTerm}" || email ~ "${searchTerm}"` : '',
           expand: 'role',
-          fields: 'id,name,email,role',
+          // fields: '',
+          // fields: 'id,name,lastname,email,role,username',
         });
         if (isMounted) {
           setUsers(records);
@@ -117,6 +121,7 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
       <TableHeader>
         <TableRow>
           <TableHead>Nombre de usuario</TableHead>
+          <TableHead>Nombre</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Rol</TableHead>
           <TableHead>Acciones</TableHead>
@@ -124,8 +129,13 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
       </TableHeader>
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell className="font-medium">{user.name}</TableCell>
+          <TableRow 
+            key={user.id} 
+            className="cursor-pointer"
+            // onClick={() => router.push(`/dashboard/users/${user.id}`)}
+          >
+            <TableCell className="font-medium">{user.username}</TableCell>
+            <TableCell>{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.role}</TableCell>
             <TableCell>
@@ -140,16 +150,18 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
                 }}
               >
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
+                  <Button 
+                    variant="ghost" 
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <span className="sr-only">Abrir menú</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                  <DropdownMenuItem className='cursor-pointer'>
-                    <Pencil className="mr-2 h-4 w-4" />Editar usuario
-                  </DropdownMenuItem>
+                  <UpdateUser user={user} onUserUpdated={onRefreshTriggered} />
                   <DropdownMenuSeparator />
                   <AnimatePresence mode="wait">
                     {confirmDeleteId === user.id ? (
@@ -162,7 +174,10 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
                       >
                         <DropdownMenuItem 
                           className="bg-red-600 text-white cursor-pointer hover:bg-red-700"
-                          onClick={() => user.id && handleDeleteUser(user.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            user.id && handleDeleteUser(user.id);
+                          }}
                         >
                           <Trash className="mr-2 h-4 w-4" /> Confirmar
                         </DropdownMenuItem>
@@ -177,7 +192,10 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
                       >
                         <DropdownMenuItem 
                           className="text-red-600 cursor-pointer"
-                          onClick={() => setConfirmDeleteId(user.id ?? null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(user.id ?? null);
+                          }}
                         >
                           <Trash className="mr-2 h-4 w-4" /> Eliminar usuario
                         </DropdownMenuItem>
@@ -194,7 +212,10 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
                       >
                         <DropdownMenuItem 
                           className="text-gray-600 cursor-pointer"
-                          onClick={() => setConfirmDeleteId(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
                         >
                           <CircleX className="mr-2 h-4 w-4" /> Cancelar
                         </DropdownMenuItem>

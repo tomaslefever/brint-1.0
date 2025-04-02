@@ -51,7 +51,7 @@ async function fetchOrderTimeline(orderId: string): Promise<TimelineEvent[]> {
     // Obtener propuestas relacionadas con la orden
     const proposals = await pb.collection('proposals').getFullList({
       filter: `order = "${orderId}"`,
-      expand: 'order,created_by,comparisons',
+      expand: 'order,created_by,comparisons,videos',
       // sort: 'created',
       requestKey: null
     });

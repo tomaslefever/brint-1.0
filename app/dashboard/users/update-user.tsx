@@ -1,97 +1,354 @@
-import { useState } from 'react'
-import { pb, RecordModel } from '@/lib/pocketbase'
+'use client'
+
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Pencil } from "lucide-react"
+import pb from '@/app/actions/pocketbase'
+import { useToast } from "@/hooks/use-toast"
+import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form"
+import { RecordModel } from '@/lib/pocketbase'
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+
+const userSchema = z.object({
+    username: z.string()
+        .min(1, "El nombre de usuario es requerido")
+        .regex(/^[a-zA-Z0-9]+$/, "El nombre de usuario solo puede contener letras y números"),
+    email: z.string().email("Correo electrónico inválido"),
+    name: z.string().min(1, "El nombre es requerido"),
+    lastname: z.string().min(1, "El apellido es requerido"),
+    role: z.enum(["admin", "author", "client", "editor", "doctor"], {
+        required_error: "Por favor seleccione un rol",
+    }),
+    category: z.enum(["Base", "Bronce", "Plata", "Oro"], {
+        required_error: "Por favor seleccione una categoría",
+    }),
+    company: z.string(),
+})
+
+type UserFormValues = z.infer<typeof userSchema>
 
 interface UpdateUserProps {
-  user: RecordModel
+    user: RecordModel;
+    onUserUpdated: () => void;
 }
 
-export function UpdateUser({ user }: UpdateUserProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [username, setUsername] = useState(user.username)
-  const [email, setEmail] = useState(user.email)
+export function UpdateUser({ user, onUserUpdated }: UpdateUserProps) {
+    const [isOpen, setIsOpen] = useState(false)
+    const { toast } = useToast()
+    const [companies, setCompanies] = useState<{ id: string, name: string }[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await pb.collection('users').update(user.id, {
-        username,
-        email,
-      })
-      setIsModalOpen(false)
-      // Aquí podrías añadir lógica para actualizar la lista de usuarios
-    } catch (error) {
-      console.error('Error al actualizar usuario:', error)
+    const form = useForm<UserFormValues>({
+        resolver: zodResolver(userSchema),
+        defaultValues: {
+            username: user.username || "",
+            email: user.email || "",
+            name: user.name || "",
+            lastname: user.lastname || "",
+            role: (user.role as any) || "doctor",
+            category: (user.category as any) || "Base",
+            company: user.company || "",
+        },
+    })
+
+    useEffect(() => {
+        let isMounted = true
+        const controller = new AbortController()
+
+        const fetchCompanies = async () => {
+            if (isLoading) return
+            setIsLoading(true)
+            setError(null)
+            try {
+                const records = await pb.collection('companies').getFullList({
+                    sort: 'name',
+                    signal: controller.signal,
+                })
+                if (isMounted) {
+                    setCompanies(records.map(company => ({ id: company.id, name: company.name })))
+                }
+            } catch (error) {
+                if (isMounted && error instanceof Error && error.name !== 'AbortError') {
+                    console.error("Error al obtener las organizaciones:", error)
+                    setError('No se pudieron cargar las organizaciones')
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false)
+                }
+            }
+        }
+
+        if (isOpen) {
+            fetchCompanies()
+        }
+
+        return () => {
+            isMounted = false
+            controller.abort()
+        }
+    }, [isOpen])
+
+    useEffect(() => {
+        if (error) {
+            toast({
+                title: "Error",
+                description: error,
+                variant: "destructive",
+            })
+        }
+    }, [error, toast])
+
+    const onSubmit = async (data: UserFormValues) => {
+        try {
+            await pb.collection('users').update(user.id, {
+                ...data,
+            })
+            setIsOpen(false)
+            onUserUpdated()
+            toast({
+                title: "Éxito",
+                description: "Usuario actualizado correctamente",
+            })
+        } catch (error) {
+            console.error("Error al actualizar el usuario:", error)
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el usuario. Verifica los datos e intenta nuevamente.",
+                variant: "destructive",
+            })
+        }
     }
-  }
 
-  return (
-    <>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="rounded-md bg-blue-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
-      >
-        Editar
-      </button>
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            form.reset()
+        }
+        setIsOpen(open)
+    }
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
+    const handleUsernameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '')
+        form.setValue('username', value)
+    }
 
-            <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-              <form onSubmit={handleSubmit} className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="mb-4">
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                    Nombre de usuario
-                  </label>
-                  <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Correo electrónico
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    required
-                  />
-                </div>
-                <div className="mt-5 sm:mt-6">
-                  <button
-                    type="submit"
-                    className="inline-flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-sm"
-                  >
-                    Actualizar Usuario
-                  </button>
-                </div>
-              </form>
-              <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                <button
-                  type="button"
-                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={() => setIsModalOpen(false)}
+    return (
+        <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+            <SheetTrigger asChild>
+                <DropdownMenuItem 
+                    className="cursor-pointer" 
+                    onSelect={(e) => {
+                        e.preventDefault();
+                        setIsOpen(true);
+                    }}
                 >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar usuario
+                </DropdownMenuItem>
+            </SheetTrigger>
+            <SheetContent className="h-full overflow-y-auto">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <SheetHeader>
+                            <SheetTitle>Actualizar Usuario</SheetTitle>
+                            <SheetDescription>
+                                Modifique los detalles del usuario
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="grid gap-4 py-4">
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <div>
+                                                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Nombre de usuario
+                                                </label>
+                                                <Input
+                                                    id="username"
+                                                    placeholder="Nombre de usuario (solo letras y números)"
+                                                    {...field}
+                                                    onChange={handleUsernameInput}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <div>
+                                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Nombres
+                                                </label>
+                                                <Input
+                                                    placeholder="Nombres"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="lastname"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <div>
+                                                <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Apellidos
+                                                </label>
+                                                <Input
+                                                    placeholder="Apellidos"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <div>
+                                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Correo electrónico
+                                                </label>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    placeholder="correo@ejemplo.com"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div>
+                                            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Rol
+                                            </label>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger id="role">
+                                                        <SelectValue placeholder="Seleccione un rol" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="admin">Administrador</SelectItem>
+                                                    <SelectItem value="doctor">Doctor</SelectItem>
+                                                    <SelectItem value="author">Autor</SelectItem>
+                                                    <SelectItem value="client">Cliente</SelectItem>
+                                                    <SelectItem value="editor">Editor</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="category"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div>
+                                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Categoría del Doctor
+                                            </label>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger id="category">
+                                                        <SelectValue placeholder="Seleccione una categoría" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Base">Base</SelectItem>
+                                                    <SelectItem value="Bronce">Bronce</SelectItem>
+                                                    <SelectItem value="Plata">Plata</SelectItem>
+                                                    <SelectItem value="Oro">Oro</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="company"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Organización
+                                        </label>
+                                        <FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <SelectTrigger id="company">
+                                                    <SelectValue placeholder="Seleccione una organización" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {companies.map((company) => (
+                                                        <SelectItem key={company.id} value={company.id}>
+                                                            {company.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <SheetFooter>
+                            <Button type="submit" className="w-full">Actualizar Usuario</Button>
+                        </SheetFooter>
+                    </form>
+                </Form>
+            </SheetContent>
+        </Sheet>
+    )
 }

@@ -26,6 +26,32 @@ interface OrderCardProps {
   order: Order
 }
 
+const maxilarSuperiorLabels: { [key: string]: string } = {
+  "alineacion": "Alineación",
+  "cerrar Espacio": "Cerrar Espacio",
+  "cerrar Linea Media": "Cerrar Línea Media",
+  "expansion": "Expansión",
+  "extrusion": "Extrusión",
+  "intrusion": "Intrusión",
+  "nivelacion": "Nivelación",
+  "proinclinacion": "Proinclinación",
+  "retroinclinacion": "Retroinclinación",
+  "stripping": "Stripping"
+};
+
+const mandibulaLabels: { [key: string]: string } = {
+  "alineacion": "Alineación",
+  "cerrar Espacio": "Cerrar Espacio",
+  "cerrar Linea Media": "Cerrar Línea Media",
+  "expansion": "Expansión",
+  "extrusion": "Extrusión",
+  "intrusion": "Intrusión",
+  "nivelacion": "Nivelación",
+  "proinclinacion": "Proinclinación",
+  "retroinclinacion": "Retroinclinación",
+  "stripping": "Stripping"
+};
+
 export function OrderCard({ order }: OrderCardProps) {
 
       // Separar los slides por tipo
@@ -65,12 +91,12 @@ const updateStatus = async (status: string) => {
         message: `Estado de la orden ${order?.id} actualizado a ${
           status === 'pending' ? 'Pendiente aceptación archivos' : 
           status === 'working' ? 'Alineadores en producción' : 
-          status === 'shipping' ? 'Alineadores enviados' :
+          status === 'shipping' ? 'Despachado' :
           status === 'complete' ? 'Trabajo completado' : 
           status === 'canceled' ? 'Cancelado' : 
           status === 'paused' ? 'Pausado' : 
           status === 'proposal_sent' ? 'Propuesta enviada': 
-          status === 'proposal_accepted' ? 'Solicitud alineadores': 
+          status === 'proposal_accepted' ? 'Despachado': 
           status === 'order_approved' ? 'Archivos aceptados': 
           status === 'order_rejected' ? 'Archivos con inconsistencias': 
           status === 'meeting_scheduled' ? 'Reunión virtual agendada': 
@@ -165,8 +191,8 @@ const handleCompressAndDownload = async () => {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(order.maxilarSuperior).map(([key, value]) => (
                       <div key={key} className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-500">{key}</span>
-                        <span className="text-lg">{String(value)}</span>
+                        <span className="text-sm font-medium text-gray-500">{maxilarSuperiorLabels[key] || key}</span>
+                        <span className="text-lg">{String(value) || '-'}</span>
                       </div>
                     ))}
                   </div>
@@ -179,8 +205,8 @@ const handleCompressAndDownload = async () => {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(order.mandibula).map(([key, value]) => (
                       <div key={key} className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-500">{key}</span>
-                        <span className="text-lg">{String(value)}</span>
+                        <span className="text-sm font-medium text-gray-500">{mandibulaLabels[key] || key}</span>
+                        <span className="text-lg">{String(value) || '-'}</span>
                       </div>
                     ))}
                   </div>
@@ -343,10 +369,10 @@ const handleCompressAndDownload = async () => {
                 <Link href={`/dashboard/orders/${order.id}/new-proposal`}><Button>Crear plan de tratamiento</Button></Link>
               </CardFooter>
             )}
-            {order.status == 'order_approved' && pb.authStore.model?.role == 'doctor' && (
+            {order.status == 'order_approved' && (
               <CardFooter className="flex gap-2">
                 <Button className="gap-2" onClick={() => {updateStatus('meeting_scheduled'); window.open('https://calendly.com/innovaligners', '_blank');}}><Calendar className="w-4 h-4"></Calendar> Agendar reunión</Button>
-                <Button className="gap-2" onClick={() => {updateStatus('meeting_completed')}}><Calendar className="w-4 h-4"></Calendar> Esperar propuesta de Innovaligners</Button>
+                <Button className="gap-2" onClick={() => {updateStatus('meeting_scheduled')}}><Calendar className="w-4 h-4"></Calendar> Esperar propuesta de Innovaligners</Button>
               </CardFooter>
             )}
             <Lightbox

@@ -275,11 +275,11 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           <h3 className="font-semibold">Maxilar Superior</h3>
           <RadioGroup value={maxilarSuperior.alineacion} onValueChange={(value) => handleMaxilarSuperiorChange('alineacion', value)}>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="alineacionCompleta" id="maxilarSuperiorAlineacionCompleta" />
+              <RadioGroupItem value="Alineación Completa" id="maxilarSuperiorAlineacionCompleta" />
               <Label htmlFor="maxilarSuperiorAlineacionCompleta">Alineación Completa</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="alineacionParcial" id="maxilarSuperiorAlineacionParcial" />
+              <RadioGroupItem value="Alineación Parcial" id="maxilarSuperiorAlineacionParcial" />
               <Label htmlFor="maxilarSuperiorAlineacionParcial">Alineación Parcial (3 a 3)</Label>
             </div>
           </RadioGroup>
@@ -309,11 +309,11 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
           <h3 className="font-semibold">Mandíbula</h3>
           <RadioGroup value={mandibula.alineacion} onValueChange={(value) => handleMandibulaChange('alineacion', value)}>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="alineacionCompleta" id="mandibulaAlineacionCompleta" />
+              <RadioGroupItem value="Alineación Completa" id="mandibulaAlineacionCompleta" />
               <Label htmlFor="mandibulaAlineacionCompleta">Alineación Completa</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="alineacionParcial" id="mandibulaAlineacionParcial" />
+              <RadioGroupItem value="Alineación Parcial" id="mandibulaAlineacionParcial" />
               <Label htmlFor="mandibulaAlineacionParcial">Alineación Parcial (3 a 3)</Label>
             </div>
           </RadioGroup>
@@ -507,17 +507,27 @@ export default function NewOrder({ customer_id, onOrderCreated }: NewOrderProps)
             {tipoImagenRadiologica === 'coneBeam' && (
               <div className="space-y-2">
                 <Label htmlFor="coneBeamArchivo">Archivos .dicom o .dcm</Label>
-                <FileDropzoneCompress 
-                  files={archivosConeBeam}
-                  onDrop={(files) => setArchivosConeBeam(prev => [...prev, ...files])}
-                  onDelete={(index) => setArchivosConeBeam(prev => prev.filter((_, i) => i !== index))}
-                  acceptedFileTypes={{
-                    'application/dicom': ['.dicom, .dcm, .1, .2, .3, .4, .5, .6, .7, .8, .9, .10, .jpg, .html, .index, .js'],
-                    'application/octet-stream': ['.*']
-                  }}
-                  fileTypeDescription="coneBeam"
-                  message="Arrastra tus archivos o carpeta DICOM/DCM aquí"
-                />
+                <div className="relative">
+                  {archivosConeBeam.length > 0 && (
+                    <button 
+                      onClick={() => setArchivosConeBeam([])}
+                      className="absolute top-2 right-2 z-10 p-1.5 bg-white rounded-full hover:bg-red-50 transition-colors"
+                    >
+                      <X className="h-5 w-5 text-red-500 hover:text-red-600" />
+                    </button>
+                  )}
+                  <FileDropzoneCompress 
+                    files={archivosConeBeam}
+                    onDrop={(files) => setArchivosConeBeam(prev => [...prev, ...files])}
+                    onDelete={(index) => setArchivosConeBeam(prev => prev.filter((_, i) => i !== index))}
+                    acceptedFileTypes={{
+                      'application/dicom': ['.dicom, .dcm, .1, .2, .3, .4, .5, .6, .7, .8, .9, .10, .jpg, .html, .index, .js'],
+                      'application/octet-stream': ['.*']
+                    }}
+                    fileTypeDescription="coneBeam"
+                    message="Arrastra tus archivos o carpeta DICOM/DCM aquí"
+                  />
+                </div>
               </div>
             )}
           </div>

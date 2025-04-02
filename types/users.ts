@@ -5,6 +5,7 @@ export type User = {
     created: string;
     updated: string;
     email: string;
+    username: string;
     name: string;
     lastname: string;
     last_login: string;

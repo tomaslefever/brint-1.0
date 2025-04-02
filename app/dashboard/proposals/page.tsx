@@ -18,7 +18,7 @@ export default function ProposalsPage() {
       try {
         const records = await pb.collection('proposals').getFullList({
           sort: '-created',
-          expand: 'order.customer'
+          expand: 'order.customer,videos'
         })
         setProposals(records as unknown as Proposal[])
       } catch (error) {
