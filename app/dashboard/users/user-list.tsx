@@ -176,7 +176,9 @@ export default function UserList({ searchTerm, refreshTrigger, onRefreshTriggere
                           className="bg-red-600 text-white cursor-pointer hover:bg-red-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            user.id && handleDeleteUser(user.id);
+                            if (user.id) {
+                              handleDeleteUser(user.id);
+                            }
                           }}
                         >
                           <Trash className="mr-2 h-4 w-4" /> Confirmar

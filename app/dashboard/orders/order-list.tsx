@@ -422,7 +422,9 @@ export default function OrderList({ searchTerm, refreshTrigger }: OrderListProps
                                   className="bg-red-600 focus:bg-red-700 hover:text-white focus:text-white text-white cursor-pointer hover:bg-red-700 w-36"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    order.id && handleDeleteOrder(order.id);
+                                    if (order.id) {
+                                      handleDeleteOrder(order.id);
+                                    }
                                   }}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" /> Confirmar
