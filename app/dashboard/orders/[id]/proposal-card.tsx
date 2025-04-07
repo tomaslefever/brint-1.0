@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
-import { FileCheck2, Clock, DollarSign, MessageSquare, Check, X, Box, Truck, Images, Video } from "lucide-react"
+import { FileCheck2, Clock, DollarSign, MessageSquare, Check, X, Box, Truck, Images, Video, Download } from "lucide-react"
 import { Proposal } from "@/types/proposal"
 import { Button } from "@/components/ui/button"
 import { pb } from "@/lib/pocketbase"
@@ -97,20 +97,39 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
               </span>
             </AccordionTrigger>
             <AccordionContent className='grid grid-cols-1 gap-4'>
-              {proposal.expand?.videos?.map((video, index) => (
-                <div key={video.id} className="flex flex-col gap-2">
-                  <video 
-                    controls
-                    className="w-full rounded-md"
-                    src={`${process.env.NEXT_PUBLIC_BASE_FILE_URL}${video.id}/${video.attachment}`}
-                  >
-                    Tu navegador no soporta el elemento de video.
-                  </video>
-                  <span className="text-sm font-medium text-gray-500">
-                    Video {index + 1}
-                  </span>
-                </div>
-              ))}
+              {proposal.expand?.videos?.map((video, index) => {
+                const isAvi = video.attachment.toLowerCase().endsWith('.avi');
+                const videoUrl = `${process.env.NEXT_PUBLIC_BASE_FILE_URL}${video.id}/${video.attachment}`;
+                
+                return (
+                  <div key={video.id} className="flex flex-col gap-2">
+                    {isAvi ? (
+                      <div className="flex items-center justify-between p-4 border rounded-md">
+                        <span className="text-sm font-medium">{video.attachment}</span>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => window.open(videoUrl, '_blank')}
+                          className="gap-2"
+                        >
+                          <Video className="w-4 h-4" />
+                          Descargar
+                        </Button>
+                      </div>
+                    ) : (
+                      <video 
+                        controls
+                        className="w-full rounded-md"
+                        src={videoUrl}
+                      >
+                        Tu navegador no soporta el elemento de video.
+                      </video>
+                    )}
+                    <span className="text-sm font-medium text-gray-500">
+                      Video {index + 1}
+                    </span>
+                  </div>
+                );
+              })}
             </AccordionContent>
           </AccordionItem>
 

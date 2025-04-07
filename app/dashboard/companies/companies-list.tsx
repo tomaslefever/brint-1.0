@@ -22,6 +22,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from 'framer-motion'
+import { UpdateCompany } from './update-company'
 
 import pb from '@/app/actions/pocketbase'
 
@@ -105,6 +106,7 @@ export default function CompaniesList({ searchTerm, refreshTrigger, onRefreshTri
       })
       setConfirmDeleteId(null)
       setOpenDropdownId(null)
+      onRefreshTriggered()
     } catch (error) {
       console.error('Error deleting company:', error)
       toast({
@@ -163,7 +165,7 @@ export default function CompaniesList({ searchTerm, refreshTrigger, onRefreshTri
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                    <DropdownMenuItem className='cursor-pointer'><Pencil className="mr-2 h-4 w-4" />Editar organización</DropdownMenuItem>
+                    <UpdateCompany company={company} onCompanyUpdated={onRefreshTriggered} />
                     <DropdownMenuSeparator />
                     <AnimatePresence mode="wait">
                       {confirmDeleteId === company.id ? (
